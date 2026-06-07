@@ -66,12 +66,24 @@ SLIDESHOW_EXCLUDE="Unsorted,To edit"
 
 ## mpv Scripts
 
-| Script           | Description                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.        |
-| `photo-info.lua` | Displays date and filename overlay (bottom-left). Adjust `MONTHS` for your language. |
+| Script           | Description                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.               |
+| `photo-info.lua` | Displays date and filename overlay (bottom-left). Configurable via script-opts (see below). |
 
 Installed to `~/.config/mpv/scripts/` by `install.sh`.
+
+### Customising the overlay (photo-info.lua)
+
+**Font** — create `~/.config/mpv/script-opts/photo-info.conf` and set:
+
+```ini
+font=DejaVu Sans
+```
+
+Any font installed on your system works. The default is `DejaVu Sans`.
+
+**Month names / language** — edit the `MONTHS` table near the top of `mpv-scripts/photo-info.lua` and re-run `install.sh`.
 
 ## Regenerating the Playlist
 

@@ -14,6 +14,9 @@ local MONTHS = {
 
 local DATE_TAGS = { "DateTimeOriginal", "DateTime", "creation_time", "date" }
 
+local opts = { font = "DejaVu Sans" }
+require("mp.options").read_options(opts, "photo-info")
+
 local overlay = mp.create_osd_overlay("ass-events")
 overlay.z     = 50  -- below crossfade.lua (z = 100)
 
@@ -125,11 +128,10 @@ local function update()
     local x       = math.floor(w * 0.013)
     local y       = math.floor(h * 0.977)
 
-    -- Configurable: font name (must be installed on your system).
     local base = string.format(
-        "{\\an1\\pos(%d,%d)\\fs%d\\fnDejaVu Sans"
+        "{\\an1\\pos(%d,%d)\\fs%d\\fn%s"
         .. "\\c&HFFFFFF&\\3c&H000000&\\3a&H80&\\bord2\\shad2}",
-        x, y, fs_date
+        x, y, fs_date, opts.font
     )
 
     if label.line2 then
