@@ -10,6 +10,7 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - Fade-to-black transitions between items (crossfade.lua, OSD-based — works for both images and videos)
 - On-screen overlay showing the photo date (from EXIF) and filename (photo-info.lua)
 - Configurable via a simple `.env` file — no private paths in the repository
+- systemd user service for playlist pre-generation on login, with optional dependency on a cloud-mount service
 
 ## Requirements
 
@@ -46,13 +47,14 @@ $EDITOR .env          # set SLIDESHOW_BASE to your photo folder
 
 Copy `.env.example` to `.env` and edit:
 
-| Variable               | Default                           | Description                                |
-| ---------------------- | --------------------------------- | ------------------------------------------ |
-| `SLIDESHOW_BASE`       | _(required)_                      | Absolute path to your photo/video library  |
-| `SLIDESHOW_DELAY`      | `10`                              | Seconds to display each image              |
-| `SLIDESHOW_EXCLUDE`    | _(empty)_                         | Comma-separated subdirectory names to skip |
-| `SLIDESHOW_TIFF_CACHE` | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files   |
-| `SLIDESHOW_PLAYLIST`   | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist      |
+| Variable                  | Default                           | Description                                                |
+| ------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| `SLIDESHOW_BASE`          | _(required)_                      | Absolute path to your photo/video library                  |
+| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                              |
+| `SLIDESHOW_EXCLUDE`       | _(empty)_                         | Comma-separated subdirectory names to skip                 |
+| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                   |
+| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                      |
+| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist |
 
 Example `.env`:
 
@@ -79,6 +81,58 @@ The playlist is cached in `~/.cache/slideshow-playlist.m3u`. Delete it and re-ru
 rm ~/.cache/slideshow-playlist.m3u
 ./generate-slideshow-playlist.sh
 ```
+
+## Cloud Storage (rclone, sshfs, SMB, …)
+
+If your photos live on a cloud service or NAS, mount the storage as a local directory first and point `SLIDESHOW_BASE` at the mount point. The key requirement is that the mount must be ready before `generate-slideshow-playlist.sh` runs — a systemd `After=` dependency handles this automatically.
+
+**Example with rclone and OneDrive:**
+
+1. Create a rclone remote (run once interactively):
+
+   ```bash
+   rclone config
+   ```
+
+2. Create a systemd user service that mounts the remote:
+
+   ```bash
+   # ~/.config/systemd/user/rclone-onedrive.service
+   [Unit]
+   Description=rclone mount OneDrive
+   After=network-online.target
+   Wants=network-online.target
+
+   [Service]
+   Type=notify
+   ExecStart=rclone mount "MyRemote:" %h/Photos \
+       --vfs-cache-mode=full \
+       --vfs-cache-max-size=50G \
+       --allow-other
+   ExecStop=/bin/fusermount -u %h/Photos
+   Restart=on-failure
+
+   [Install]
+   WantedBy=default.target
+   ```
+
+3. Configure mpv-photo-frame to wait for it:
+
+   ```bash
+   # .env
+   SLIDESHOW_BASE="${HOME}/Photos"
+   SLIDESHOW_AFTER_SERVICE="rclone-onedrive.service"
+   ```
+
+4. Re-run `install.sh` — it writes the `After=` line into the installed service unit.
+
+5. Enable both services:
+   ```bash
+   systemctl --user enable --now rclone-onedrive.service
+   systemctl --user enable --now slideshow-playlist.service
+   ```
+
+The same pattern works for any mount tool: replace `rclone-onedrive.service` with whatever service manages your mount.
 
 ## Why TIFF conversion?
 

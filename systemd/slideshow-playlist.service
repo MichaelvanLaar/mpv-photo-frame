@@ -1,0 +1,19 @@
+# Reference copy — run install.sh to generate and install the configured version.
+#
+# This service pre-generates the mpv-photo-frame playlist on login so the
+# slideshow can start immediately without scanning the library first.
+#
+# If your photo library lives on cloud or network storage (rclone, sshfs,
+# SMB, etc.), set SLIDESHOW_AFTER_SERVICE in .env before running install.sh.
+# install.sh will add the corresponding After= line so the playlist is only
+# built once the mount is ready.
+
+[Unit]
+Description=Pre-generate slideshow playlist
+
+[Service]
+Type=oneshot
+ExecStart=/path/to/mpv-photo-frame/generate-slideshow-playlist.sh
+
+[Install]
+WantedBy=default.target
