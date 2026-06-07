@@ -140,4 +140,4 @@ FFmpeg has a longstanding bug that decodes JPEG-in-TIFF files with incorrect YCb
 
 ## License
 
-MIT
+[MIT](LICENSE)
