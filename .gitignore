@@ -1,3 +1,7 @@
 .env
 .superpowers/
 docs/superpowers/
+
+# Claude Code — personal files
+.claude/settings.local.json
+.claude/local.md
