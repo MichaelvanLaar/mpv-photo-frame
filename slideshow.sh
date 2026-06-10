@@ -29,10 +29,22 @@ if ! grep -q '[^[:space:]]' "$SLIDESHOW_PLAYLIST" 2>/dev/null; then
   exit 1
 fi
 
+# Overlay options: forward only the ones set in .env; unset ones use the
+# photo-info.lua built-in defaults (see .env.example).
+overlay_opts=()
+[[ -n "${SLIDESHOW_OVERLAY_FONT:-}" ]]     && overlay_opts+=(--script-opts-append="photo-info-font=$SLIDESHOW_OVERLAY_FONT")
+[[ -n "${SLIDESHOW_OVERLAY_SIZE:-}" ]]     && overlay_opts+=(--script-opts-append="photo-info-size=$SLIDESHOW_OVERLAY_SIZE")
+[[ -n "${SLIDESHOW_OVERLAY_COLOR:-}" ]]    && overlay_opts+=(--script-opts-append="photo-info-color=$SLIDESHOW_OVERLAY_COLOR")
+[[ -n "${SLIDESHOW_OVERLAY_OUTLINE:-}" ]]  && overlay_opts+=(--script-opts-append="photo-info-outline=$SLIDESHOW_OVERLAY_OUTLINE")
+[[ -n "${SLIDESHOW_OVERLAY_POSITION:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-position=$SLIDESHOW_OVERLAY_POSITION")
+[[ -n "${SLIDESHOW_OVERLAY_LANG:-}" ]]     && overlay_opts+=(--script-opts-append="photo-info-lang=$SLIDESHOW_OVERLAY_LANG")
+[[ -n "${SLIDESHOW_OVERLAY_CLOCK:-}" ]]    && overlay_opts+=(--script-opts-append="photo-info-clock=$SLIDESHOW_OVERLAY_CLOCK")
+
 mpv \
   --fullscreen \
   --no-audio \
   --image-display-duration="$DELAY" \
   --loop-playlist=inf \
   --shuffle \
+  "${overlay_opts[@]}" \
   --playlist="$SLIDESHOW_PLAYLIST"
