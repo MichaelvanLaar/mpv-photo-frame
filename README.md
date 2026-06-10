@@ -100,6 +100,43 @@ The date and time lines scale together, keeping their relative proportions. An u
 
 **Month names / language** — edit the `MONTHS` table near the top of `mpv-scripts/photo-info.lua` and re-run `install.sh`.
 
+## Compilations (multiple slideshows)
+
+A _compilation_ is a named slideshow: a base folder plus optional excluded
+subfolders, plus any other settings you want to override. Define one by creating
+`profiles/<name>.env` in the runtime directory and setting at least its
+`SLIDESHOW_BASE`:
+
+```bash
+# profiles/urlaub.env
+SLIDESHOW_BASE="/home/you/Pictures/Holidays"
+SLIDESHOW_EXCLUDE="private,raw"
+SLIDESHOW_DELAY=6
+```
+
+Then play it, or list what's defined:
+
+```bash
+./slideshow.sh urlaub      # play the "urlaub" compilation
+./slideshow.sh --list      # list available compilations
+./slideshow.sh             # default: the shared .env (unchanged behaviour)
+```
+
+Resolution is layered, last wins: built-in default → `.env` (shared) →
+`profiles/<name>.env`. Any setting a compilation omits falls back to `.env`,
+then to the built-in default, so nothing is ever unset.
+
+Each compilation gets its **own** playlist cache
+(`~/.cache/slideshow-playlist-<name>.m3u`); the no-argument default keeps
+`~/.cache/slideshow-playlist.m3u`. The TIFF→JPEG cache is shared across all
+compilations, so files converted for one are reused by others at no extra cost.
+The login service pre-builds only the default; other compilations build their
+cache on first launch and reuse it thereafter.
+
+Want a desktop icon per compilation? Create a `.desktop` launcher with
+`Exec=…/slideshow.sh <name>` — desktop icons are intentionally not part of this
+project.
+
 ## Regenerating the Playlist
 
 The playlist is cached in `~/.cache/slideshow-playlist.m3u`. Delete it and re-run `generate-slideshow-playlist.sh` whenever you add new photos.
