@@ -15,9 +15,11 @@ RUNTIME_DIR="$(realpath -m "$RUNTIME_DIR")"
 # Refuse to deploy onto the repo itself (would cp files onto themselves and
 # abort under set -e). Run from the repo and deploy to a separate runtime dir.
 if [[ "$SCRIPT_DIR" == "$RUNTIME_DIR" ]]; then
-  echo "Error: runtime dir equals the repo dir ($RUNTIME_DIR)." >&2
-  echo "Run install.sh from the repo and deploy elsewhere, e.g.:" >&2
-  echo "  SLIDESHOW_INSTALL_DIR=\"\$HOME/Slideshow\" ./install.sh" >&2
+  echo "Error: the repo and the runtime directory are the same ($RUNTIME_DIR)." >&2
+  echo "The repo must live in a separate dev location and deploy INTO the runtime dir." >&2
+  echo "Move the repo out, then deploy back, e.g.:" >&2
+  echo "  mv \"$RUNTIME_DIR\" ~/Git-Repositorys/mpv-photo-frame" >&2
+  echo "  cd ~/Git-Repositorys/mpv-photo-frame && ./install.sh" >&2
   exit 1
 fi
 MPV_SCRIPTS="${HOME}/.config/mpv/scripts"

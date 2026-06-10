@@ -25,27 +25,29 @@ sudo apt install mpv ffmpeg imagemagick
 ## Quick Start
 
 ```bash
-# 1. Clone
+# 1. Clone to a development location (NOT ~/Slideshow — that is the runtime dir)
 git clone https://github.com/michaelvanlaar/mpv-photo-frame.git
 cd mpv-photo-frame
 
-# 2. Install (copies Lua scripts to ~/.config/mpv/scripts/)
+# 2. Deploy: copies the scripts to the runtime dir (~/Slideshow by default),
+#    installs the mpv Lua scripts, and installs the systemd pre-gen service.
+#    Override the runtime dir with SLIDESHOW_INSTALL_DIR=/path bash install.sh
 bash install.sh
 
-# 3. Configure
-cp .env.example .env
-$EDITOR .env          # set SLIDESHOW_BASE to your photo folder
+# 3. Configure the runtime .env (install.sh created it from the template)
+$EDITOR ~/Slideshow/.env      # set SLIDESHOW_BASE to your photo folder
+bash install.sh               # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 # 4. Build the playlist (converts TIFFs, ~few minutes on first run)
-./generate-slideshow-playlist.sh
+~/Slideshow/generate-slideshow-playlist.sh
 
 # 5. Start the slideshow
-./slideshow.sh
+~/Slideshow/slideshow.sh
 ```
 
 ## Configuration
 
-Copy `.env.example` to `.env` and edit:
+Settings live in the runtime `.env` (install.sh creates it from `.env.example`). Edit `~/Slideshow/.env`:
 
 | Variable                  | Default                           | Description                                                |
 | ------------------------- | --------------------------------- | ---------------------------------------------------------- |
@@ -128,7 +130,7 @@ then to the built-in default, so nothing is ever unset.
 
 Each compilation gets its **own** playlist cache
 (`~/.cache/slideshow-playlist-<name>.m3u`); the no-argument default keeps
-`~/.cache/slideshow-playlist.m3u`. The TIFF→JPEG cache is shared across all
+`~/.cache/slideshow-playlist.m3u`. (Setting a global `SLIDESHOW_PLAYLIST` in the shared `.env` overrides this and forces all compilations onto one cache — set it only inside a single `profiles/<name>.env` if you need a custom path.) The TIFF→JPEG cache is shared across all
 compilations, so files converted for one are reused by others at no extra cost.
 The login service pre-builds only the default; other compilations build their
 cache on first launch and reuse it thereafter.
