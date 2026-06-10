@@ -67,28 +67,35 @@ SLIDESHOW_EXCLUDE="Unsorted,To edit"
 
 ## mpv Scripts
 
-| Script           | Description                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------- |
-| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.               |
-| `photo-info.lua` | Displays date and filename overlay (bottom-left). Configurable via script-opts (see below). |
+| Script           | Description                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                       |
+| `photo-info.lua` | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `.env` (see below). |
 
 Installed to `~/.config/mpv/scripts/` by `install.sh`.
 
 ### Customising the overlay (photo-info.lua)
 
-**Font** — create `~/.config/mpv/script-opts/photo-info.conf` and set:
+Overlay options are set in `.env` (alongside the other settings) and applied at
+launch — no need to edit the Lua script or a separate file. Each option is
+optional; anything you omit uses a sensible built-in default.
 
-```ini
-font=DejaVu Sans
-```
+| `.env` variable              | Default                | Values                                                    |
+| ---------------------------- | ---------------------- | --------------------------------------------------------- |
+| `SLIDESHOW_OVERLAY_FONT`     | `DejaVu Sans`          | any installed font name                                   |
+| `SLIDESHOW_OVERLAY_SIZE`     | `medium`               | `small` / `medium` / `large` / `xlarge`                   |
+| `SLIDESHOW_OVERLAY_COLOR`    | `FFFFFF`               | hex `RRGGBB` (text fill)                                  |
+| `SLIDESHOW_OVERLAY_OUTLINE`  | `000000`               | hex `RRGGBB` (text outline)                               |
+| `SLIDESHOW_OVERLAY_POSITION` | `bottom-left`          | `bottom-left` / `bottom-right` / `top-left` / `top-right` |
+| `SLIDESHOW_OVERLAY_LANG`     | system language → `en` | `en` / `de` / `fr` / `es`                                 |
+| `SLIDESHOW_OVERLAY_CLOCK`    | language default       | `12` / `24`                                               |
 
-Any font installed on your system works. The default is `DejaVu Sans`.
+The language sets month names and the date/time format (e.g. `de`:
+“14. März 2024 / 14:30 Uhr”, `en`: “March 14, 2024 / 2:30 PM”). With nothing set,
+the overlay uses your system language, falling back to English.
 
-**Size** — set `size` in the same `photo-info.conf` to scale the overlay text relative to the screen height (no pixel values needed):
-
-```ini
-size=large
-```
+`SLIDESHOW_OVERLAY_SIZE` scales the overlay text relative to the screen height
+(no pixel values needed):
 
 | Value    | Scale | Notes                          |
 | -------- | ----- | ------------------------------ |
@@ -98,8 +105,6 @@ size=large
 | `xlarge` | 1.8×  |                                |
 
 The date and time lines scale together, keeping their relative proportions. An unknown value falls back to `medium`.
-
-**Month names / language** — edit the `MONTHS` table near the top of `mpv-scripts/photo-info.lua` and re-run `install.sh`.
 
 ## Compilations (multiple slideshows)
 
