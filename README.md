@@ -83,6 +83,21 @@ font=DejaVu Sans
 
 Any font installed on your system works. The default is `DejaVu Sans`.
 
+**Size** — set `size` in the same `photo-info.conf` to scale the overlay text relative to the screen height (no pixel values needed):
+
+```ini
+size=large
+```
+
+| Value    | Scale | Notes                          |
+| -------- | ----- | ------------------------------ |
+| `small`  | 0.75× |                                |
+| `medium` | 1.0×  | Default — unchanged appearance |
+| `large`  | 1.4×  |                                |
+| `xlarge` | 1.8×  |                                |
+
+The date and time lines scale together, keeping their relative proportions. An unknown value falls back to `medium`.
+
 **Month names / language** — edit the `MONTHS` table near the top of `mpv-scripts/photo-info.lua` and re-run `install.sh`.
 
 ## Regenerating the Playlist

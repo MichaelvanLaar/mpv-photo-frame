@@ -14,8 +14,21 @@ local MONTHS = {
 
 local DATE_TAGS = { "DateTimeOriginal", "DateTime", "creation_time", "date" }
 
-local opts = { font = "DejaVu Sans" }
+local opts = { font = "DejaVu Sans", size = "medium" }
 require("mp.options").read_options(opts, "photo-info")
+
+-- Overlay size presets: multipliers on the height-proportional font sizes.
+local SIZE_SCALE = {
+    small  = 0.75,
+    medium = 1.0,  -- current look (unchanged default)
+    large  = 1.4,
+    xlarge = 1.8,
+}
+local scale = SIZE_SCALE[opts.size:lower()]
+if not scale then
+    mp.msg.warn("photo-info: unknown size '" .. opts.size .. "', using medium")
+    scale = 1.0
+end
 
 local overlay = mp.create_osd_overlay("ass-events")
 overlay.z     = 50  -- below crossfade.lua (z = 100)
@@ -123,8 +136,8 @@ local function update()
         return
     end
 
-    local fs_date = math.floor(h * 0.022)
-    local fs_time = math.floor(h * 0.0165)
+    local fs_date = math.floor(h * 0.022 * scale)
+    local fs_time = math.floor(h * 0.0165 * scale)
     local x       = math.floor(w * 0.013)
     local y       = math.floor(h * 0.977)
 
