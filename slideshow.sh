@@ -1,48 +1,32 @@
 #!/usr/bin/env bash
 # Digital picture frame slideshow (images + videos, no audio).
+# Usage: slideshow.sh [compilation]   (see profiles/, or --list)
 # Configure via .env in this script's directory — see .env.example.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-[[ -f "$SCRIPT_DIR/.env" ]] && source "$SCRIPT_DIR/.env"
+# shellcheck source=slideshow-lib.sh
+source "$SCRIPT_DIR/slideshow-lib.sh"
+slideshow_init "$SCRIPT_DIR" "$@"
 
 : "${SLIDESHOW_BASE:?'SLIDESHOW_BASE is not set. Copy .env.example to .env and edit it.'}"
 DELAY="${SLIDESHOW_DELAY:-10}"
-CACHED_PLAYLIST="${SLIDESHOW_PLAYLIST:-$HOME/.cache/slideshow-playlist.m3u}"
 
-# Build find -prune args from SLIDESHOW_EXCLUDE (comma-separated folder names).
-_prune=()
-if [[ -n "${SLIDESHOW_EXCLUDE:-}" ]]; then
-  _prune+=('(')
-  _first=true
-  while IFS= read -r _d; do
-    _d="${_d#"${_d%%[![:space:]]*}"}"; _d="${_d%"${_d##*[![:space:]]}"}"
-    [[ -z "$_d" ]] && continue
-    "$_first" || _prune+=('-o')
-    _prune+=('-path' "$SLIDESHOW_BASE/$_d")
-    _first=false
-  done < <(tr ',' '\n' <<< "$SLIDESHOW_EXCLUDE")
-  _prune+=(')' '-prune' '-o')
+# Build (and cache) this compilation's playlist on first use, or rebuild if the
+# cache is empty/blank. The generator also performs TIFF→JPEG conversion, reusing
+# the shared TIFF cache, so a compilation whose files were already cached by
+# another incurs scan-only cost.
+if ! grep -q '[^[:space:]]' "$SLIDESHOW_PLAYLIST" 2>/dev/null; then
+  profile_arg=()
+  [[ -n "$SLIDESHOW_PROFILE" ]] && profile_arg=("$SLIDESHOW_PROFILE")
+  "$SCRIPT_DIR/generate-slideshow-playlist.sh" "${profile_arg[@]}" || exit 1
 fi
 
-if [[ -f "$CACHED_PLAYLIST" ]]; then
-  PLAYLIST="$CACHED_PLAYLIST"
-else
-  PLAYLIST=$(mktemp)
-  trap 'rm -f "$PLAYLIST"' EXIT
-  find "$SLIDESHOW_BASE" \
-    "${_prune[@]}" \
-    -type f \( \
-      -iname "*.jpg"   -o -iname "*.jpeg" \
-      -o -iname "*.png"  -o -iname "*.webp" \
-      -o -iname "*.gif"  -o -iname "*.bmp"  \
-      -o -iname "*.tiff" -o -iname "*.tif"  \
-      -o -iname "*.avif" -o -iname "*.heic" \
-      -o -iname "*.mp4"  -o -iname "*.mov"  \
-      -o -iname "*.avi"  -o -iname "*.mkv"  \
-      -o -iname "*.m4v"  -o -iname "*.3gp"  \
-    \) -print0 \
-    | shuf -z \
-    | tr '\0' '\n' > "$PLAYLIST"
+# Refuse to launch on an empty/missing playlist; drop the empty cache so the
+# next run regenerates instead of trusting a stale empty file.
+if ! grep -q '[^[:space:]]' "$SLIDESHOW_PLAYLIST" 2>/dev/null; then
+  echo "Error: no media found — playlist is empty: $SLIDESHOW_PLAYLIST" >&2
+  rm -f "$SLIDESHOW_PLAYLIST"
+  exit 1
 fi
 
 mpv \
@@ -51,4 +35,4 @@ mpv \
   --image-display-duration="$DELAY" \
   --loop-playlist=inf \
   --shuffle \
-  --playlist="$PLAYLIST"
+  --playlist="$SLIDESHOW_PLAYLIST"
