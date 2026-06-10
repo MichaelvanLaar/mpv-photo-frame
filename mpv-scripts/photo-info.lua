@@ -6,15 +6,17 @@ if not mp.create_osd_overlay then
     return
 end
 
--- Configurable: month names in your language.
-local MONTHS = {
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember"
-}
-
 local DATE_TAGS = { "DateTimeOriginal", "DateTime", "creation_time", "date" }
 
-local opts = { font = "DejaVu Sans", size = "medium" }
+local opts = {
+    font = "DejaVu Sans",
+    size = "medium",
+    color = "FFFFFF",
+    outline = "000000",
+    position = "bottom-left",
+    lang = "",     -- empty = auto-detect from $LANG, falling back to en
+    clock = "",    -- empty = chosen language's default
+}
 require("mp.options").read_options(opts, "photo-info")
 
 -- Overlay size presets: multipliers on the height-proportional font sizes.
@@ -28,6 +30,98 @@ local scale = SIZE_SCALE[opts.size:lower()]
 if not scale then
     mp.msg.warn("photo-info: unknown size '" .. opts.size .. "', using medium")
     scale = 1.0
+end
+
+-- Hex RRGGBB -> ASS &HBBGGRR& (ASS colour bytes are reversed); fall back on bad input.
+local function to_ass_color(hex, fallback)
+    if type(hex) == "string" and hex:match("^%x%x%x%x%x%x$") then
+        return "&H" .. hex:sub(5, 6) .. hex:sub(3, 4) .. hex:sub(1, 2) .. "&"
+    end
+    mp.msg.warn("photo-info: invalid color '" .. tostring(hex) .. "', using default")
+    return fallback
+end
+local fill_c    = to_ass_color(opts.color, "&HFFFFFF&")
+local outline_c = to_ass_color(opts.outline, "&H000000&")
+
+-- Corner position -> ASS alignment (\an) + anchor fractions of width/height.
+local POS = {
+    ["bottom-left"]  = { an = 1, xf = 0.013, yf = 0.977 },
+    ["bottom-right"] = { an = 3, xf = 0.987, yf = 0.977 },
+    ["top-left"]     = { an = 7, xf = 0.013, yf = 0.023 },
+    ["top-right"]    = { an = 9, xf = 0.987, yf = 0.023 },
+}
+local pos = POS[opts.position:lower()]
+if not pos then
+    mp.msg.warn("photo-info: unknown position '" .. opts.position .. "', using bottom-left")
+    pos = POS["bottom-left"]
+end
+
+-- 12-hour clock helper with language-specific markers.
+local function ampm(h, mi, am, pm)
+    local hn = tonumber(h)
+    local suffix = (hn < 12) and am or pm
+    local h12 = hn % 12
+    if h12 == 0 then h12 = 12 end
+    return h12 .. ":" .. mi .. " " .. suffix
+end
+
+-- Language presets: month names + date/time builders + default clock.
+local PRESETS = {
+    en = {
+        months = { "January", "February", "March", "April", "May", "June",
+                   "July", "August", "September", "October", "November", "December" },
+        date   = function(d, m, y) return m .. " " .. d .. ", " .. y end,    -- March 14, 2024
+        clock_default = "24",
+        time24 = function(h, mi) return h .. ":" .. mi end,                  -- 14:30
+        time12 = function(h, mi) return ampm(h, mi, "AM", "PM") end,         -- 2:30 PM
+    },
+    de = {
+        months = { "Januar", "Februar", "März", "April", "Mai", "Juni",
+                   "Juli", "August", "September", "Oktober", "November", "Dezember" },
+        date   = function(d, m, y) return d .. ". " .. m .. " " .. y end,    -- 14. März 2024
+        clock_default = "24",
+        time24 = function(h, mi) return h .. ":" .. mi .. " Uhr" end,        -- 14:30 Uhr
+        time12 = function(h, mi) return ampm(h, mi, "AM", "PM") end,
+    },
+    fr = {
+        months = { "janvier", "février", "mars", "avril", "mai", "juin",
+                   "juillet", "août", "septembre", "octobre", "novembre", "décembre" },
+        date   = function(d, m, y) return d .. " " .. m .. " " .. y end,     -- 14 mars 2024
+        clock_default = "24",
+        time24 = function(h, mi) return tonumber(h) .. " h " .. mi end,      -- 14 h 30
+        time12 = function(h, mi) return ampm(h, mi, "AM", "PM") end,
+    },
+    es = {
+        months = { "enero", "febrero", "marzo", "abril", "mayo", "junio",
+                   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre" },
+        date   = function(d, m, y) return d .. " de " .. m .. " de " .. y end, -- 14 de marzo de 2024
+        clock_default = "24",
+        time24 = function(h, mi) return h .. ":" .. mi end,                  -- 14:30
+        time12 = function(h, mi) return ampm(h, mi, "a. m.", "p. m.") end,   -- 2:30 p. m.
+    },
+}
+
+local function detect_lang()
+    local env = os.getenv("LC_ALL") or os.getenv("LC_TIME") or os.getenv("LANG") or ""
+    local code = env:sub(1, 2):lower()
+    return PRESETS[code] and code or "en"
+end
+
+local lang = opts.lang:lower()
+if lang == "" or lang == "auto" then
+    lang = detect_lang()
+elseif not PRESETS[lang] then
+    mp.msg.warn("photo-info: unknown language '" .. opts.lang .. "', using en")
+    lang = "en"
+end
+local L = PRESETS[lang]
+
+local clock = opts.clock
+if clock ~= "12" and clock ~= "24" then
+    if clock ~= "" then
+        mp.msg.warn("photo-info: invalid clock '" .. clock .. "', using language default")
+    end
+    clock = L.clock_default
 end
 
 local overlay = mp.create_osd_overlay("ass-events")
@@ -73,16 +167,14 @@ local function get_tags(path)
     return tags
 end
 
+-- Returns { day=<number>, month=<1..12>, year=<string>, hour=<string>, min=<string> } or nil.
 local function parse_date(s)
     local y, mo, d, h, mi =
         s:match("(%d%d%d%d)[:%-%/](%d%d)[:%-%/](%d%d)[T ](%d%d):(%d%d)")
     if not y or y == "0000" then return nil end
     local m = tonumber(mo)
     if not m or m < 1 or m > 12 then return nil end
-    return {
-        line1 = string.format("%d. %s %s", tonumber(d), MONTHS[m], y),
-        line2 = string.format("%s:%s Uhr", h, mi),
-    }
+    return { day = tonumber(d), month = m, year = y, hour = h, min = mi }
 end
 
 local function get_label(path, tags)
@@ -90,8 +182,15 @@ local function get_label(path, tags)
     for _, key in ipairs(DATE_TAGS) do
         local v = tags[key]
         if v and not v:match("^0000") then
-            local parsed = parse_date(v)
-            if parsed then return parsed end
+            local p = parse_date(v)
+            if p then
+                local line2 = (clock == "12") and L.time12(p.hour, p.min)
+                                               or  L.time24(p.hour, p.min)
+                return {
+                    line1 = L.date(p.day, L.months[p.month], p.year),
+                    line2 = line2,
+                }
+            end
         end
     end
     -- 2. Sidecar .name file (TIFF cache — ffprobe cannot read JPEG COM segments)
@@ -138,13 +237,13 @@ local function update()
 
     local fs_date = math.floor(h * 0.022 * scale)
     local fs_time = math.floor(h * 0.0165 * scale)
-    local x       = math.floor(w * 0.013)
-    local y       = math.floor(h * 0.977)
+    local x       = math.floor(w * pos.xf)
+    local y       = math.floor(h * pos.yf)
 
     local base = string.format(
-        "{\\an1\\pos(%d,%d)\\fs%d\\fn%s"
-        .. "\\c&HFFFFFF&\\3c&H000000&\\3a&H80&\\bord2\\shad2}",
-        x, y, fs_date, opts.font
+        "{\\an%d\\pos(%d,%d)\\fs%d\\fn%s"
+        .. "\\c%s\\3c%s\\3a&H80&\\bord2\\shad2}",
+        pos.an, x, y, fs_date, opts.font, fill_c, outline_c
     )
 
     if label.line2 then
