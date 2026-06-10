@@ -25,29 +25,28 @@ sudo apt install mpv ffmpeg imagemagick
 ## Quick Start
 
 ```bash
-# 1. Clone to a development location (NOT ~/Slideshow — that is the runtime dir)
+# 1. Clone (this folder becomes your installation — keep it where you like)
 git clone https://github.com/michaelvanlaar/mpv-photo-frame.git
 cd mpv-photo-frame
 
-# 2. Deploy: copies the scripts to the runtime dir (~/Slideshow by default),
-#    installs the mpv Lua scripts, and installs the systemd pre-gen service.
-#    Override the runtime dir with SLIDESHOW_INSTALL_DIR=/path bash install.sh
+# 2. Install: copies the mpv Lua scripts, installs the systemd pre-gen
+#    service, and creates .env from the template on first run.
 bash install.sh
 
-# 3. Configure the runtime .env (install.sh created it from the template)
-$EDITOR ~/Slideshow/.env      # set SLIDESHOW_BASE to your photo folder
-bash install.sh               # re-run if you changed SLIDESHOW_AFTER_SERVICE
+# 3. Configure (install.sh created .env from the template)
+$EDITOR .env          # set SLIDESHOW_BASE to your photo folder
+bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 # 4. Build the playlist (converts TIFFs, ~few minutes on first run)
-~/Slideshow/generate-slideshow-playlist.sh
+./generate-slideshow-playlist.sh
 
 # 5. Start the slideshow
-~/Slideshow/slideshow.sh
+./slideshow.sh
 ```
 
 ## Configuration
 
-Settings live in the runtime `.env` (install.sh creates it from `.env.example`). Edit `~/Slideshow/.env`:
+Edit `.env` (install.sh creates it from `.env.example` on first run):
 
 | Variable                  | Default                           | Description                                                |
 | ------------------------- | --------------------------------- | ---------------------------------------------------------- |
@@ -106,7 +105,7 @@ The date and time lines scale together, keeping their relative proportions. An u
 
 A _compilation_ is a named slideshow: a base folder plus optional excluded
 subfolders, plus any other settings you want to override. Define one by creating
-`profiles/<name>.env` in the runtime directory and setting at least its
+`profiles/<name>.env` (next to `install.sh`) and setting at least its
 `SLIDESHOW_BASE`:
 
 ```bash

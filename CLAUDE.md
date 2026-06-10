@@ -6,11 +6,11 @@ Linux digital picture frame: plays a photo/video library as a fullscreen mpv sli
 
 | File | Purpose |
 |------|---------|
-| `.claude/learnings.md` | Project corrections/observations, auto-recalled next run                 |
-| `.claude/settings.json` | Permissions and environment variables                                    |
-| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                                          |
-| `.github/workflows/claude.yml` | Runs Claude on `@claude` mentions in issues/PRs                          |
-| `.gitignore` | Git ignore patterns                                                      |
+| `.claude/learnings.md` | Project corrections/observations, auto-recalled next run                  |
+| `.claude/settings.json` | Permissions and environment variables                                     |
+| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                                           |
+| `.github/workflows/claude.yml` | Runs Claude on `@claude` mentions in issues/PRs                           |
+| `.gitignore` | Git ignore patterns                                                       |
 
 ## Commands
 
