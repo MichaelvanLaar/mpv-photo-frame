@@ -84,10 +84,10 @@ optional; anything you omit uses a sensible built-in default.
 | ---------------------------- | ---------------------- | --------------------------------------------------------- |
 | `SLIDESHOW_OVERLAY_FONT`     | `DejaVu Sans`          | any installed font name                                   |
 | `SLIDESHOW_OVERLAY_SIZE`     | `medium`               | `small` / `medium` / `large` / `xlarge`                   |
-| `SLIDESHOW_OVERLAY_COLOR`    | `FFFFFF`               | hex `RRGGBB` (text fill)                                  |
-| `SLIDESHOW_OVERLAY_OUTLINE`  | `000000`               | hex `RRGGBB` (text outline)                               |
+| `SLIDESHOW_OVERLAY_COLOR`    | `FFFFFF`               | hex `RRGGBB`, no leading `#` (text fill)                  |
+| `SLIDESHOW_OVERLAY_OUTLINE`  | `000000`               | hex `RRGGBB`, no leading `#` (text outline)               |
 | `SLIDESHOW_OVERLAY_POSITION` | `bottom-left`          | `bottom-left` / `bottom-right` / `top-left` / `top-right` |
-| `SLIDESHOW_OVERLAY_LANG`     | system language → `en` | `en` / `de` / `fr` / `es`                                 |
+| `SLIDESHOW_OVERLAY_LANG`     | system language → `en` | `en` / `de` / `fr` / `es` (or `auto` / unset = system)    |
 | `SLIDESHOW_OVERLAY_CLOCK`    | language default       | `12` / `24`                                               |
 
 The language sets month names and the date/time format (e.g. `de`:
