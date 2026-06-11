@@ -69,21 +69,79 @@ slideshow_init() {
   fi
 }
 
-# Build a find(1) -prune expression from SLIDESHOW_EXCLUDE into SLIDESHOW_PRUNE.
-# Usage: slideshow_build_prune   (reads SLIDESHOW_EXCLUDE and SLIDESHOW_BASE)
-slideshow_build_prune() {
+# Parse SLIDESHOW_SOURCES into SLIDESHOW_ROOTS[] (find start dirs) and
+# SLIDESHOW_PRUNE[] (a combined find -prune expression).
+# Each non-blank, non-comment line:   PATH [ | exclude1,exclude2,... ]
+# Excludes are relative to that line's PATH and pruned as "$PATH/$exclude".
+# Missing PATHs are warned to stderr and skipped; an empty SLIDESHOW_SOURCES
+# or zero usable roots is a fatal error (exit 2).
+# Note: on those fatal errors it calls exit (not return) to abort the calling script.
+slideshow_parse_sources() {
+  # shellcheck disable=SC2034  # both arrays are consumed by the sourcing script
+  SLIDESHOW_ROOTS=()
   # shellcheck disable=SC2034  # consumed by the sourcing script
   SLIDESHOW_PRUNE=()
-  [[ -n "${SLIDESHOW_EXCLUDE:-}" ]] || return 0
-  SLIDESHOW_PRUNE+=('(')
-  local first=true d
-  while IFS= read -r d; do
-    d="${d#"${d%%[![:space:]]*}"}"
-    d="${d%"${d##*[![:space:]]}"}"
-    [[ -z "$d" ]] && continue
-    "$first" || SLIDESHOW_PRUNE+=('-o')
-    SLIDESHOW_PRUNE+=('-path' "$SLIDESHOW_BASE/$d")
-    first=false
-  done < <(tr ',' '\n' <<< "$SLIDESHOW_EXCLUDE")
-  SLIDESHOW_PRUNE+=(')' '-prune' '-o')
+  local -a prune_paths=()
+  local line trimmed path excludes excl p first
+
+  if [[ -z "${SLIDESHOW_SOURCES:-}" ]]; then
+    echo "Error: SLIDESHOW_SOURCES is not set. Copy .env.example to .env and edit it." >&2
+    exit 2
+  fi
+
+  while IFS= read -r line; do
+    # Trim surrounding whitespace.
+    trimmed="${line#"${line%%[![:space:]]*}"}"
+    trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+    [[ -z "$trimmed" ]] && continue   # blank line
+    [[ "$trimmed" == \#* ]] && continue   # comment line
+
+    # Split "PATH | excludes" on the first '|'.
+    if [[ "$trimmed" == *"|"* ]]; then
+      path="${trimmed%%|*}"
+      excludes="${trimmed#*|}"
+    else
+      path="$trimmed"
+      excludes=""
+    fi
+
+    # Trim the path and drop a single trailing slash (but never reduce "/").
+    path="${path#"${path%%[![:space:]]*}"}"
+    path="${path%"${path##*[![:space:]]}"}"
+    [[ "$path" != "/" ]] && path="${path%/}"
+    [[ -z "$path" ]] && continue
+
+    if [[ ! -d "$path" ]]; then
+      echo "Warning: source folder not found, skipping: $path" >&2
+      continue
+    fi
+    SLIDESHOW_ROOTS+=("$path")
+
+    # Excludes: comma-separated, each relative to this path.
+    if [[ -n "$excludes" ]]; then
+      while IFS= read -r excl; do
+        excl="${excl#"${excl%%[![:space:]]*}"}"
+        excl="${excl%"${excl##*[![:space:]]}"}"
+        [[ -z "$excl" ]] && continue
+        prune_paths+=("$path/$excl")
+      done < <(tr ',' '\n' <<<"$excludes")
+    fi
+  done <<<"$SLIDESHOW_SOURCES"
+
+  if [[ "${#SLIDESHOW_ROOTS[@]}" -eq 0 ]]; then
+    echo "Error: no usable source folders in SLIDESHOW_SOURCES." >&2
+    exit 2
+  fi
+
+  # Build the prune expression from all collected exclude paths.
+  if [[ "${#prune_paths[@]}" -gt 0 ]]; then
+    SLIDESHOW_PRUNE+=('(')
+    first=true
+    for p in "${prune_paths[@]}"; do
+      "$first" || SLIDESHOW_PRUNE+=('-o')
+      SLIDESHOW_PRUNE+=('-path' "$p")
+      first=false
+    done
+    SLIDESHOW_PRUNE+=(')' '-prune' '-o')
+  fi
 }
