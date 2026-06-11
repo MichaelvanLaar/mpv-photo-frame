@@ -3,6 +3,8 @@
   "permissions": {
     "deny": [
       "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./profiles/*.env)",
       "Read(./secrets/**)",
       "Bash(curl:*)",
       "Bash(wget:*)",
