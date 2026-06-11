@@ -42,6 +42,7 @@ else
 fi
 
 # Load .env so SLIDESHOW_AFTER_SERVICE is available for the service unit
+# shellcheck source=/dev/null
 [[ -f "$SCRIPT_DIR/.env" ]] && source "$SCRIPT_DIR/.env"
 
 # Install systemd user service

@@ -67,6 +67,7 @@ find "${SLIDESHOW_ROOTS[@]}" \
     -o -iname "*.m4v"  -o -iname "*.3gp"  \
   \) -print > "$NONTIFF_LIST"
 
+# shellcheck disable=SC2086  # intentional word-split of the newline-separated TIFF list
 { cat "$NONTIFF_LIST"; printf '%s\n' $TIFF_JPGS; } \
   | shuf > "$PLAYLIST"
 
