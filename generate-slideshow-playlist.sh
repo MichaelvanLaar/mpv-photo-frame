@@ -9,13 +9,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/slideshow-lib.sh"
 slideshow_init "$SCRIPT_DIR" "$@"
 
-: "${SLIDESHOW_BASE:?'SLIDESHOW_BASE is not set. Copy .env.example to .env and edit it.'}"
 TIFF_CACHE="${SLIDESHOW_TIFF_CACHE:-$HOME/.cache/slideshow-tiff-cache}"
 PLAYLIST="$SLIDESHOW_PLAYLIST"
 
 mkdir -p "$(dirname "$PLAYLIST")" "$TIFF_CACHE"
 
-slideshow_build_prune
+slideshow_parse_sources
 
 # Convert one TIFF to a cached JPEG if not already done or source is newer.
 convert_tiff() {
@@ -41,12 +40,12 @@ export -f convert_tiff
 export TIFF_CACHE
 
 echo "Scanning for TIFF files…"
-TIFF_COUNT=$(find "$SLIDESHOW_BASE" \
+TIFF_COUNT=$(find "${SLIDESHOW_ROOTS[@]}" \
   "${SLIDESHOW_PRUNE[@]}" \
   -type f \( -iname "*.tiff" -o -iname "*.tif" \) -print | wc -l)
 echo "Converting $TIFF_COUNT TIFF files (skipping already-cached)…"
 
-TIFF_JPGS=$(find "$SLIDESHOW_BASE" \
+TIFF_JPGS=$(find "${SLIDESHOW_ROOTS[@]}" \
   "${SLIDESHOW_PRUNE[@]}" \
   -type f \( -iname "*.tiff" -o -iname "*.tif" \) -print0 \
   | xargs -0 -P "$(nproc)" -I{} bash -c 'convert_tiff "$@"' _ {})
@@ -56,7 +55,7 @@ echo "Building playlist…"
 NONTIFF_LIST=$(mktemp) || exit 1
 trap 'rm -f "$NONTIFF_LIST"' EXIT
 
-find "$SLIDESHOW_BASE" \
+find "${SLIDESHOW_ROOTS[@]}" \
   "${SLIDESHOW_PRUNE[@]}" \
   -type f \( \
     -iname "*.jpg"   -o -iname "*.jpeg" \
