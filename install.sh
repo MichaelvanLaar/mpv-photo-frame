@@ -35,7 +35,7 @@ if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
   cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
   echo ""
   echo "Created .env from .env.example."
-  echo ">>> Edit $SCRIPT_DIR/.env and set SLIDESHOW_BASE to your photo directory. <<<"
+  echo ">>> Edit $SCRIPT_DIR/.env and set SLIDESHOW_SOURCES to your photo folder(s). <<<"
   echo ""
 else
   echo ".env already exists — skipping."
@@ -66,7 +66,7 @@ echo "Installed: $SERVICE_FILE"
 
 echo ""
 echo "Done. Next steps:"
-echo "  1. Edit .env (set SLIDESHOW_BASE and optionally SLIDESHOW_AFTER_SERVICE)"
+echo "  1. Edit .env (set SLIDESHOW_SOURCES and optionally SLIDESHOW_AFTER_SERVICE)"
 echo "  2. Re-run install.sh after editing .env to rebuild the service unit"
 echo "  3. systemctl --user enable --now slideshow-playlist.service"
 echo "  4. ./slideshow.sh        (or: ./slideshow.sh <name> for a compilation — see profiles/example.env)"

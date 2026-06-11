@@ -34,7 +34,7 @@ cd mpv-photo-frame
 bash install.sh
 
 # 3. Configure (install.sh created .env from the template)
-$EDITOR .env          # set SLIDESHOW_BASE to your photo folder
+$EDITOR .env          # set SLIDESHOW_SOURCES to your photo folder(s)
 bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 # 4. Build the playlist (converts TIFFs, ~few minutes on first run)
@@ -48,21 +48,22 @@ bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 Edit `.env` (install.sh creates it from `.env.example` on first run):
 
-| Variable                  | Default                           | Description                                                |
-| ------------------------- | --------------------------------- | ---------------------------------------------------------- |
-| `SLIDESHOW_BASE`          | _(required)_                      | Absolute path to your photo/video library                  |
-| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                              |
-| `SLIDESHOW_EXCLUDE`       | _(empty)_                         | Comma-separated subdirectory names to skip                 |
-| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                   |
-| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                      |
-| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist |
+| Variable                  | Default                           | Description                                                                                |
+| ------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `SLIDESHOW_SOURCES`       | _(required)_                      | Photo/video library: one source folder per line, optional `\| sub1,sub2` excludes per line |
+| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                                                              |
+| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                                                   |
+| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                                                      |
+| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist                                 |
 
 Example `.env`:
 
 ```bash
-SLIDESHOW_BASE="/mnt/nas/Photos"
+SLIDESHOW_SOURCES="
+  /mnt/nas/Photos        | Unsorted,To edit
+  /mnt/nas/PhoneBackup
+"
 SLIDESHOW_DELAY=12
-SLIDESHOW_EXCLUDE="Unsorted,To edit"
 ```
 
 ## mpv Scripts
@@ -108,15 +109,16 @@ The date and time lines scale together, keeping their relative proportions. An u
 
 ## Compilations (multiple slideshows)
 
-A _compilation_ is a named slideshow: a base folder plus optional excluded
-subfolders, plus any other settings you want to override. Define one by creating
-`profiles/<name>.env` (next to `install.sh`) and setting at least its
-`SLIDESHOW_BASE`:
+A _compilation_ is a named slideshow: one or more source folders, each with
+optional excluded subfolders, plus any other settings you want to override.
+Define one by creating `profiles/<name>.env` (next to `install.sh`) and setting
+at least its `SLIDESHOW_SOURCES`:
 
 ```bash
 # profiles/urlaub.env
-SLIDESHOW_BASE="/home/you/Pictures/Holidays"
-SLIDESHOW_EXCLUDE="private,raw"
+SLIDESHOW_SOURCES="
+  /home/you/Pictures/Holidays | private,raw
+"
 SLIDESHOW_DELAY=6
 ```
 
@@ -154,7 +156,7 @@ rm ~/.cache/slideshow-playlist.m3u
 
 ## Cloud Storage (rclone, sshfs, SMB, …)
 
-If your photos live on a cloud service or NAS, mount the storage as a local directory first and point `SLIDESHOW_BASE` at the mount point. The key requirement is that the mount must be ready before `generate-slideshow-playlist.sh` runs — a systemd `After=` dependency handles this automatically.
+If your photos live on a cloud service or NAS, mount the storage as a local directory first and point `SLIDESHOW_SOURCES` at the mount point. The key requirement is that the mount must be ready before `generate-slideshow-playlist.sh` runs — a systemd `After=` dependency handles this automatically.
 
 **Example with rclone and OneDrive:**
 
@@ -190,7 +192,7 @@ If your photos live on a cloud service or NAS, mount the storage as a local dire
 
    ```bash
    # .env
-   SLIDESHOW_BASE="${HOME}/Photos"
+   SLIDESHOW_SOURCES="${HOME}/Photos"
    SLIDESHOW_AFTER_SERVICE="rclone-onedrive.service"
    ```
 
