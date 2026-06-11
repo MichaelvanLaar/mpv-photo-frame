@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/slideshow-lib.sh"
 slideshow_init "$SCRIPT_DIR" "$@"
 
-: "${SLIDESHOW_BASE:?'SLIDESHOW_BASE is not set. Copy .env.example to .env and edit it.'}"
+: "${SLIDESHOW_SOURCES:?'SLIDESHOW_SOURCES is not set. Copy .env.example to .env and edit it.'}"
 DELAY="${SLIDESHOW_DELAY:-10}"
 
 # Build (and cache) this compilation's playlist on first use, or rebuild if the
