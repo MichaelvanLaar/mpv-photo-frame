@@ -1,0 +1,3 @@
+# Gitignored scratch/working dirs — skip startup indexing
+docs/superpowers/
+.superpowers/

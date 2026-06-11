@@ -6,11 +6,11 @@ Linux digital picture frame: plays a photo/video library as a fullscreen mpv sli
 
 | File | Purpose |
 |------|---------|
-| `.claude/learnings.md` | Project corrections/observations, auto-recalled next run    |
-| `.claude/settings.json` | Permissions and environment variables                       |
-| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                             |
-| `.github/workflows/claude.yml` | Runs Claude on `@claude` mentions in issues/PRs             |
-| `.gitignore` | Git ignore patterns                                         |
+| `.claude/learnings.md` | Project corrections/observations, auto-recalled next run   |
+| `.claude/settings.json` | Permissions and environment variables                      |
+| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                            |
+| `.github/workflows/claude.yml` | Runs Claude on `@claude` mentions in issues/PRs            |
+| `.gitignore` | Git ignore patterns                                        |
 
 ## Commands
 
@@ -24,7 +24,7 @@ No build step. Verify loop (install with `apt install shellcheck` / `go install 
 
 ```bash
 shellcheck *.sh tests/*.sh            # lint Bash scripts (incl. tests/)
-shfmt -d .                            # check Bash formatting (2-space indent)
+shfmt -i 2 -d .                       # check Bash formatting (2-space indent)
 luacheck mpv-scripts/                 # lint Lua mpv scripts
 bash tests/parse-sources.test.sh      # run parser unit tests
 ```

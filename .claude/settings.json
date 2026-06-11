@@ -1,10 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
+    "allow": [
+      "Bash(shellcheck:*)",
+      "Bash(shfmt:*)",
+      "Bash(luacheck:*)",
+      "Bash(bash tests/:*)"
+    ],
     "deny": [
       "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./profiles/*.env)",
       "Read(./secrets/**)",
       "Bash(curl:*)",
       "Bash(wget:*)",
@@ -13,5 +17,29 @@
   },
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(jq -r '.tool_input.file_path // empty'); base=${file##*/}; case \"$base\" in *.example|*.sample|*.template|*.dist|example.env|sample.env) exit 0;; esac; case \"$base\" in .env|.env.*|*.env) echo \"Blocked: $base may contain secrets\" >&2; exit 2;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "filepath=$(jq -r '.tool_input.file_path // empty'); case \"$filepath\" in *.sh) command -v shfmt >/dev/null 2>&1 && shfmt -i 2 -w \"$filepath\" 2>/dev/null || true ;; esac"
+          }
+        ]
+      }
+    ]
   }
 }
