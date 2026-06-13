@@ -1,7 +1,7 @@
 # ============================================================
 # mpv-photo-frame — configuration
-# Copy this file to .env and fill in your values:
-#   cp .env.example .env
+# Copy this file to slideshow.conf and fill in your values:
+#   cp slideshow.conf.example slideshow.conf
 # ============================================================
 
 # Required: your photo/video library, as one source folder per line.
@@ -39,12 +39,12 @@ SLIDESHOW_DELAY=10
 # SLIDESHOW_AFTER_SERVICE=""
 
 # --- Compilations (multiple slideshows) ---------------------------------
-# Create profiles/<name>.env overriding any variable above (at minimum
+# Create profiles/<name>.conf overriding any variable above (at minimum
 # SLIDESHOW_SOURCES), then run:   ./slideshow.sh <name>
 # List them with:             ./slideshow.sh --list
 #
-# Do NOT set SLIDESHOW_PLAYLIST in this shared .env when using compilations:
-# each compilation automatically gets its own cache at
+# Do NOT set SLIDESHOW_PLAYLIST in this shared slideshow.conf when using
+# compilations: each compilation automatically gets its own cache at
 # ~/.cache/slideshow-playlist-<name>.m3u. A single profile may set it for a
 # custom path, but setting it here would make all compilations collide on one
 # file.

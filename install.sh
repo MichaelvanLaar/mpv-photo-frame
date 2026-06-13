@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # mpv-photo-frame installer
-# Copies mpv Lua scripts, installs the systemd user service, and scaffolds .env.
+# Copies mpv Lua scripts, installs the systemd user service, and scaffolds slideshow.conf.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,20 +30,20 @@ done
 # Make shell scripts executable
 chmod +x "$SCRIPT_DIR/slideshow.sh" "$SCRIPT_DIR/generate-slideshow-playlist.sh"
 
-# Set up .env
-if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
-  cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+# Set up slideshow.conf
+if [[ ! -f "$SCRIPT_DIR/slideshow.conf" ]]; then
+  cp "$SCRIPT_DIR/slideshow.conf.example" "$SCRIPT_DIR/slideshow.conf"
   echo ""
-  echo "Created .env from .env.example."
-  echo ">>> Edit $SCRIPT_DIR/.env and set SLIDESHOW_SOURCES to your photo folder(s). <<<"
+  echo "Created slideshow.conf from slideshow.conf.example."
+  echo ">>> Edit $SCRIPT_DIR/slideshow.conf and set SLIDESHOW_SOURCES to your photo folder(s). <<<"
   echo ""
 else
-  echo ".env already exists — skipping."
+  echo "slideshow.conf already exists — skipping."
 fi
 
-# Load .env so SLIDESHOW_AFTER_SERVICE is available for the service unit
+# Load slideshow.conf so SLIDESHOW_AFTER_SERVICE is available for the service unit
 # shellcheck source=/dev/null
-[[ -f "$SCRIPT_DIR/.env" ]] && source "$SCRIPT_DIR/.env"
+[[ -f "$SCRIPT_DIR/slideshow.conf" ]] && source "$SCRIPT_DIR/slideshow.conf"
 
 # Install systemd user service
 mkdir -p "$SYSTEMD_USER_DIR"
@@ -67,7 +67,7 @@ echo "Installed: $SERVICE_FILE"
 
 echo ""
 echo "Done. Next steps:"
-echo "  1. Edit .env (set SLIDESHOW_SOURCES and optionally SLIDESHOW_AFTER_SERVICE)"
-echo "  2. Re-run install.sh after editing .env to rebuild the service unit"
+echo "  1. Edit slideshow.conf (set SLIDESHOW_SOURCES and optionally SLIDESHOW_AFTER_SERVICE)"
+echo "  2. Re-run install.sh after editing slideshow.conf to rebuild the service unit"
 echo "  3. systemctl --user enable --now slideshow-playlist.service"
-echo "  4. ./slideshow.sh        (or: ./slideshow.sh <name> for a compilation — see profiles/example.env)"
+echo "  4. ./slideshow.sh        (or: ./slideshow.sh <name> for a compilation — see profiles/example.conf)"

@@ -2,7 +2,7 @@
 # Generate a shuffled playlist for mpv-photo-frame.
 # Usage: generate-slideshow-playlist.sh [compilation]   (see profiles/, or --list)
 # Converts TIFF files to JPEG cache in parallel (skips already-cached).
-# Configure via .env in this script's directory — see .env.example.
+# Configure via slideshow.conf in this script's directory — see slideshow.conf.example.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=slideshow-lib.sh

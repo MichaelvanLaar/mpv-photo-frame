@@ -9,7 +9,7 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - Parallel TIFF conversion with incremental caching — only re-converts changed files
 - Fade-to-black transitions between items (crossfade.lua, OSD-based — works for both images and videos)
 - On-screen overlay showing the photo date (from EXIF) and filename (photo-info.lua)
-- Configurable via a simple `.env` file — no private paths in the repository
+- Configurable via a simple `slideshow.conf` file — no private paths in the repository
 - systemd user service for playlist pre-generation on login, with optional dependency on a cloud-mount service
 
 ## Requirements
@@ -30,11 +30,11 @@ git clone https://github.com/michaelvanlaar/mpv-photo-frame.git
 cd mpv-photo-frame
 
 # 2. Install: copies the mpv Lua scripts, installs the systemd pre-gen
-#    service, and creates .env from the template on first run.
+#    service, and creates slideshow.conf from the template on first run.
 bash install.sh
 
-# 3. Configure (install.sh created .env from the template)
-$EDITOR .env          # set SLIDESHOW_SOURCES to your photo folder(s)
+# 3. Configure (install.sh created slideshow.conf from the template)
+$EDITOR slideshow.conf   # set SLIDESHOW_SOURCES to your photo folder(s)
 bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 # 4. Build the playlist (converts TIFFs, ~few minutes on first run)
@@ -46,7 +46,7 @@ bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 ## Configuration
 
-Edit `.env` (install.sh creates it from `.env.example` on first run):
+Edit `slideshow.conf` (install.sh creates it from `slideshow.conf.example` on first run):
 
 | Variable                  | Default                           | Description                                                                                                                                                      |
 | ------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -56,7 +56,7 @@ Edit `.env` (install.sh creates it from `.env.example` on first run):
 | `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                                                                                                                            |
 | `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist                                                                                                       |
 
-Example `.env`:
+Example `slideshow.conf`:
 
 ```bash
 SLIDESHOW_SOURCES="
@@ -70,20 +70,20 @@ SLIDESHOW_DELAY=12
 
 ## mpv Scripts
 
-| Script           | Description                                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                       |
-| `photo-info.lua` | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `.env` (see below). |
+| Script           | Description                                                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                                 |
+| `photo-info.lua` | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `slideshow.conf` (see below). |
 
 Installed to `~/.config/mpv/scripts/` by `install.sh`.
 
 ### Customising the overlay (photo-info.lua)
 
-Overlay options are set in `.env` (alongside the other settings) and applied at
+Overlay options are set in `slideshow.conf` (alongside the other settings) and applied at
 launch — no need to edit the Lua script or a separate file. Each option is
 optional; anything you omit uses a sensible built-in default.
 
-| `.env` variable              | Default                | Values                                                    |
+| `slideshow.conf` variable    | Default                | Values                                                    |
 | ---------------------------- | ---------------------- | --------------------------------------------------------- |
 | `SLIDESHOW_OVERLAY_FONT`     | `DejaVu Sans`          | any installed font name                                   |
 | `SLIDESHOW_OVERLAY_SIZE`     | `medium`               | `small` / `medium` / `large` / `xlarge`                   |
@@ -113,11 +113,11 @@ The date and time lines scale together, keeping their relative proportions. An u
 
 A _compilation_ is a named slideshow: one or more source folders, each with
 optional excluded subfolders, plus any other settings you want to override.
-Define one by creating `profiles/<name>.env` (next to `install.sh`) and setting
+Define one by creating `profiles/<name>.conf` (next to `install.sh`) and setting
 at least its `SLIDESHOW_SOURCES`:
 
 ```bash
-# profiles/urlaub.env
+# profiles/urlaub.conf
 SLIDESHOW_SOURCES="
   /home/you/Pictures/Holidays | private,raw
 "
@@ -129,16 +129,16 @@ Then play it, or list what's defined:
 ```bash
 ./slideshow.sh urlaub      # play the "urlaub" compilation
 ./slideshow.sh --list      # list available compilations
-./slideshow.sh             # default: the shared .env (unchanged behaviour)
+./slideshow.sh             # default: the shared slideshow.conf (unchanged behaviour)
 ```
 
-Resolution is layered, last wins: built-in default → `.env` (shared) →
-`profiles/<name>.env`. Any setting a compilation omits falls back to `.env`,
+Resolution is layered, last wins: built-in default → `slideshow.conf` (shared) →
+`profiles/<name>.conf`. Any setting a compilation omits falls back to `slideshow.conf`,
 then to the built-in default, so nothing is ever unset.
 
 Each compilation gets its **own** playlist cache
 (`~/.cache/slideshow-playlist-<name>.m3u`); the no-argument default keeps
-`~/.cache/slideshow-playlist.m3u`. (Setting a global `SLIDESHOW_PLAYLIST` in the shared `.env` overrides this and forces all compilations onto one cache — set it only inside a single `profiles/<name>.env` if you need a custom path.) The TIFF→JPEG cache is shared across all
+`~/.cache/slideshow-playlist.m3u`. (Setting a global `SLIDESHOW_PLAYLIST` in the shared `slideshow.conf` overrides this and forces all compilations onto one cache — set it only inside a single `profiles/<name>.conf` if you need a custom path.) The TIFF→JPEG cache is shared across all
 compilations, so files converted for one are reused by others at no extra cost.
 The login service pre-builds only the default; other compilations build their
 cache on first launch and reuse it thereafter.
@@ -193,7 +193,7 @@ If your photos live on a cloud service or NAS, mount the storage as a local dire
 3. Configure mpv-photo-frame to wait for it:
 
    ```bash
-   # .env
+   # slideshow.conf
    SLIDESHOW_SOURCES="${HOME}/Photos"
    SLIDESHOW_AFTER_SERVICE="rclone-onedrive.service"
    ```

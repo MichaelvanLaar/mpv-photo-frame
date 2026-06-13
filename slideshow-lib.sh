@@ -3,27 +3,27 @@
 # Shared config/profile resolution for mpv-photo-frame.
 # Sourced by slideshow.sh and generate-slideshow-playlist.sh — not run directly.
 
-# Print available compilations (profiles/*.env, excluding the example template).
+# Print available compilations (profiles/*.conf, excluding the example template).
 # Usage: slideshow_list_profiles <profiles_dir>
 slideshow_list_profiles() {
   local dir="$1" f name found=false
   echo "Available compilations:"
   if [[ -d "$dir" ]]; then
-    for f in "$dir"/*.env; do
+    for f in "$dir"/*.conf; do
       [[ -e "$f" ]] || continue
-      name="$(basename "$f" .env)"
+      name="$(basename "$f" .conf)"
       [[ "$name" == "example" ]] && continue
       echo "  $name"
       found=true
     done
   fi
-  "$found" || echo "  (none yet — create $dir/<name>.env; see example.env)"
-  echo "Run with no argument for the default (shared .env)."
+  "$found" || echo "  (none yet — create $dir/<name>.conf; see example.conf)"
+  echo "Run with no argument for the default (shared slideshow.conf)."
 }
 
 # Resolve configuration for an optional compilation argument.
 # Usage: slideshow_init <script_dir> "$@"
-# - sources <script_dir>/.env, then profiles/<name>.env (last wins)
+# - sources <script_dir>/slideshow.conf, then profiles/<name>.conf (last wins)
 # - handles --list / -l (prints and exits 0)
 # - validates <name>; unknown or invalid name exits non-zero with the list
 # - sets SLIDESHOW_PROFILE (empty for the default) and a per-compilation
@@ -41,7 +41,7 @@ slideshow_init() {
   SLIDESHOW_PROFILE="${1:-}"
 
   # shellcheck source=/dev/null
-  [[ -f "$script_dir/.env" ]] && source "$script_dir/.env"
+  [[ -f "$script_dir/slideshow.conf" ]] && source "$script_dir/slideshow.conf"
 
   if [[ -n "$SLIDESHOW_PROFILE" ]]; then
     case "$SLIDESHOW_PROFILE" in
@@ -50,7 +50,7 @@ slideshow_init() {
         exit 2
         ;;
     esac
-    local profile_file="$profiles_dir/$SLIDESHOW_PROFILE.env"
+    local profile_file="$profiles_dir/$SLIDESHOW_PROFILE.conf"
     if [[ ! -f "$profile_file" ]]; then
       echo "Error: no compilation named '$SLIDESHOW_PROFILE'." >&2
       slideshow_list_profiles "$profiles_dir" >&2
@@ -85,7 +85,7 @@ slideshow_parse_sources() {
   local line trimmed path excludes excl p first
 
   if [[ -z "${SLIDESHOW_SOURCES:-}" ]]; then
-    echo "Error: SLIDESHOW_SOURCES is not set. Copy .env.example to .env and edit it." >&2
+    echo "Error: SLIDESHOW_SOURCES is not set. Copy slideshow.conf.example to slideshow.conf and edit it." >&2
     exit 2
   fi
 

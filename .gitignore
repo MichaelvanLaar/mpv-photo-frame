@@ -1,4 +1,4 @@
-.env
+slideshow.conf
 .superpowers/
 docs/superpowers/
 
@@ -6,5 +6,5 @@ docs/superpowers/
 .claude/settings.local.json
 .claude/local.md
 
-profiles/*.env
-!profiles/example.env
+profiles/*.conf
+!profiles/example.conf
