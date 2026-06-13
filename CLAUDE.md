@@ -1,16 +1,16 @@
 # mpv-photo-frame
 
-Linux digital picture frame: plays a photo/video library as a fullscreen mpv slideshow with fade transitions and an EXIF date/filename overlay. Bash orchestration scripts + Lua mpv scripts. Configured via a gitignored `.env` (see `.env.example`).
+Linux digital picture frame: plays a photo/video library as a fullscreen mpv slideshow with fade transitions and an EXIF date/filename overlay. Bash orchestration scripts + Lua mpv scripts. Configured via a gitignored `slideshow.conf` (see `slideshow.conf.example`).
 
 ## Key Config Files
 
-| File | Purpose |
-|------|---------|
-| `.claude/learnings.md` | Project corrections/observations, auto-recalled next run   |
-| `.claude/settings.json` | Permissions and environment variables                      |
-| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                            |
-| `.github/workflows/claude.yml` | Runs Claude on `@claude` mentions in issues/PRs            |
-| `.gitignore` | Git ignore patterns                                        |
+| File                                       | Purpose                                                  |
+| ------------------------------------------ | -------------------------------------------------------- |
+| `.claude/learnings.md`                     | Project corrections/observations, auto-recalled next run |
+| `.claude/settings.json`                    | Permissions and environment variables                    |
+| `.github/workflows/claude-code-review.yml` | Auto-reviews every pull request                          |
+| `.github/workflows/claude.yml`             | Runs Claude on `@claude` mentions in issues/PRs          |
+| `.gitignore`                               | Git ignore patterns                                      |
 
 ## Commands
 
@@ -34,17 +34,17 @@ bash tests/parse-sources.test.sh      # run parser unit tests
 - `*.sh` — Bash entrypoints (install, playlist generation, slideshow launch)
 - `mpv-scripts/` — Lua mpv scripts: `crossfade.lua` (fade transitions), `photo-info.lua` (overlay)
 - `systemd/` — user service for playlist pre-generation on login
-- `.env.example` — documented config template; real `.env` is gitignored
+- `slideshow.conf.example` — documented config template; real `slideshow.conf` is gitignored
 
 ## Conventions
 
-- All runtime config comes from `.env` — never hardcode paths; add new options to `.env.example` with a default and a doc-table row in `README.md`.
+- All runtime config comes from `slideshow.conf` — never hardcode paths; add new options to `slideshow.conf.example` with a default and a doc-table row in `README.md`.
 - Lua overlay options are exposed via mpv `script-opts` so users override without editing scripts.
 - Keep scripts POSIX-friendly Bash with `set`-guarded variable expansion (`: "${VAR:?...}"`).
 
 ## Don't
 
-- Don't commit secrets or credentials to git — `.env` stays untracked.
+- Don't commit secrets or credentials to git — `slideshow.conf` stays untracked.
 - Don't use `--force` flags — fix the underlying issue instead.
 - Don't put private/absolute photo paths in committed files.
 

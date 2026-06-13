@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Digital picture frame slideshow (images + videos, no audio).
 # Usage: slideshow.sh [compilation]   (see profiles/, or --list)
-# Configure via .env in this script's directory — see .env.example.
+# Configure via slideshow.conf in this script's directory — see slideshow.conf.example.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=slideshow-lib.sh
 source "$SCRIPT_DIR/slideshow-lib.sh"
 slideshow_init "$SCRIPT_DIR" "$@"
 
-: "${SLIDESHOW_SOURCES:?'SLIDESHOW_SOURCES is not set. Copy .env.example to .env and edit it.'}"
+: "${SLIDESHOW_SOURCES:?'SLIDESHOW_SOURCES is not set. Copy slideshow.conf.example to slideshow.conf and edit it.'}"
 DELAY="${SLIDESHOW_DELAY:-10}"
 
 # Build (and cache) this compilation's playlist on first use, or rebuild if the
@@ -29,8 +29,8 @@ if ! grep -q '[^[:space:]]' "$SLIDESHOW_PLAYLIST" 2>/dev/null; then
   exit 1
 fi
 
-# Overlay options: forward only the ones set in .env; unset ones use the
-# photo-info.lua built-in defaults (see .env.example).
+# Overlay options: forward only the ones set in slideshow.conf; unset ones use the
+# photo-info.lua built-in defaults (see slideshow.conf.example).
 overlay_opts=()
 [[ -n "${SLIDESHOW_OVERLAY_FONT:-}" ]]     && overlay_opts+=(--script-opts-append="photo-info-font=$SLIDESHOW_OVERLAY_FONT")
 [[ -n "${SLIDESHOW_OVERLAY_SIZE:-}" ]]     && overlay_opts+=(--script-opts-append="photo-info-size=$SLIDESHOW_OVERLAY_SIZE")
