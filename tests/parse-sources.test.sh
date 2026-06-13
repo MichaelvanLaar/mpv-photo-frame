@@ -22,7 +22,8 @@ check() { # check <description> <expected> <actual>
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p "$tmp/a/private" "$tmp/a/keep" "$tmp/a/raw" "$tmp/b" "$tmp/c/raw"
+mkdir -p "$tmp/a/private" "$tmp/a/keep" "$tmp/a/raw" "$tmp/b" "$tmp/c/raw" \
+  "$tmp/a/2020/raw" "$tmp/a/2021/raw"
 
 # A: single folder, no excludes
 SLIDESHOW_SOURCES="$tmp/a"
@@ -67,6 +68,16 @@ SLIDESHOW_SOURCES="
 "
 slideshow_parse_sources 2>/dev/null
 check "missing skipped" "$tmp/a" "${SLIDESHOW_ROOTS[*]}"
+
+# I: sub-sub-folder exclude (relative path with a slash)
+SLIDESHOW_SOURCES="$tmp/a | 2020/raw"
+slideshow_parse_sources
+check "sub-sub-folder prune" "( -path $tmp/a/2020/raw ) -prune -o" "${SLIDESHOW_PRUNE[*]}"
+
+# J: glob exclude (*/raw matches all 'raw' dirs at any depth under the root)
+SLIDESHOW_SOURCES="$tmp/a | */raw"
+slideshow_parse_sources
+check "glob exclude prune" "( -path $tmp/a/*/raw ) -prune -o" "${SLIDESHOW_PRUNE[*]}"
 
 # G: empty SLIDESHOW_SOURCES -> exit 2
 (SLIDESHOW_SOURCES="" slideshow_parse_sources) 2>/dev/null

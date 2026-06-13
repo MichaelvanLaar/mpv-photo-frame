@@ -48,19 +48,21 @@ bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
 
 Edit `.env` (install.sh creates it from `.env.example` on first run):
 
-| Variable                  | Default                           | Description                                                                                |
-| ------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
-| `SLIDESHOW_SOURCES`       | _(required)_                      | Photo/video library: one source folder per line, optional `\| sub1,sub2` excludes per line |
-| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                                                              |
-| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                                                   |
-| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                                                      |
-| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist                                 |
+| Variable                  | Default                           | Description                                                                                                                                                      |
+| ------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SLIDESHOW_SOURCES`       | _(required)_                      | Photo/video library: one source folder per line, optional `\| excl1,excl2` excludes (subfolder names, relative sub-paths like `2020/raw`, or globs like `*/raw`) |
+| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                                                                                                                                    |
+| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                                                                                                                         |
+| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                                                                                                                            |
+| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist                                                                                                       |
 
 Example `.env`:
 
 ```bash
 SLIDESHOW_SOURCES="
-  /mnt/nas/Photos        | Unsorted,To edit
+  /mnt/nas/Photos        | Unsorted,To edit   # exclude named subfolders
+  /mnt/nas/Family        | 2019/Unedited       # exclude a specific sub-sub-folder
+  /mnt/nas/Archive       | */RAW,*/Thumbnails  # glob: all RAW/Thumbnails dirs at any depth
   /mnt/nas/PhoneBackup
 "
 SLIDESHOW_DELAY=12
