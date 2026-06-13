@@ -1,25 +1,13 @@
 # ============================================================
-# mpv-photo-frame — configuration
-# Copy this file to slideshow.conf and fill in your values:
+# mpv-photo-frame — settings
+# Copy this file to slideshow.conf and adjust as needed:
 #   cp slideshow.conf.example slideshow.conf
-# ============================================================
-
-# Required: your photo/video library, as one source folder per line.
-# Optionally skip folders by adding  | excl1,excl2  after the path (comma-separated,
-# relative to that source folder). Excludes can be:
-#   - a direct subfolder name:       raw
-#   - a deeper relative path:        2020/raw   (sub-sub-folder)
-#   - a glob matching any depth:     */raw      (all folders named "raw" at any depth)
-# Lines starting with # are ignored, so you can comment a source out.
 #
-# Examples:
-#   SLIDESHOW_SOURCES="/path/to/your/photos"
-#   SLIDESHOW_SOURCES="
-#     /home/me/Pictures/Holidays | private,raw
-#     /home/me/Pictures/Family   | 2023/Unedited        # exact sub-sub-folder
-#     /mnt/nas/Scans             | */RAW,*/Thumbnails   # glob: all RAW/Thumbnails dirs
-#   "
-SLIDESHOW_SOURCES="/path/to/your/photos"
+# This file holds APP-WIDE SETTINGS only. Your photo/video sources live in
+# per-slideshow files: slideshows/<name>.conf (see slideshows/example.conf).
+# Every setting here is inherited by all slideshows unless a slideshow overrides
+# it. The whole file is optional — built-in defaults apply when a key is unset.
+# ============================================================
 
 # Seconds to display each image (default: 10)
 SLIDESHOW_DELAY=10
@@ -28,26 +16,11 @@ SLIDESHOW_DELAY=10
 # (created automatically; uncomment to override)
 # SLIDESHOW_TIFF_CACHE="${HOME}/.cache/slideshow-tiff-cache"
 
-# Where to store the generated playlist file
-# (created automatically; uncomment to override)
-# SLIDESHOW_PLAYLIST="${HOME}/.cache/slideshow-playlist.m3u"
-
 # If your photos live on cloud or network storage (rclone, sshfs, SMB, etc.),
 # set this to the systemd service that mounts that storage.
 # install.sh will add an After= dependency so the playlist is only generated
 # once the mount is ready. Example: "rclone-onedrive.service"
 # SLIDESHOW_AFTER_SERVICE=""
-
-# --- Compilations (multiple slideshows) ---------------------------------
-# Create profiles/<name>.conf overriding any variable above (at minimum
-# SLIDESHOW_SOURCES), then run:   ./slideshow.sh <name>
-# List them with:             ./slideshow.sh --list
-#
-# Do NOT set SLIDESHOW_PLAYLIST in this shared slideshow.conf when using
-# compilations: each compilation automatically gets its own cache at
-# ~/.cache/slideshow-playlist-<name>.m3u. A single profile may set it for a
-# custom path, but setting it here would make all compilations collide on one
-# file.
 
 # --- Overlay (date/filename caption) ------------------------------------
 # All optional; each falls back to a sensible default if unset.
