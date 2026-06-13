@@ -1,72 +1,116 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# Shared config/profile resolution for mpv-photo-frame.
+# Shared config/slideshow resolution for mpv-photo-frame.
 # Sourced by slideshow.sh and generate-slideshow-playlist.sh — not run directly.
 
-# Print available compilations (profiles/*.conf, excluding the example template).
-# Usage: slideshow_list_profiles <profiles_dir>
-slideshow_list_profiles() {
-  local dir="$1" f name found=false
-  echo "Available compilations:"
-  if [[ -d "$dir" ]]; then
-    for f in "$dir"/*.conf; do
-      [[ -e "$f" ]] || continue
-      name="$(basename "$f" .conf)"
-      [[ "$name" == "example" ]] && continue
-      echo "  $name"
-      found=true
-    done
-  fi
-  "$found" || echo "  (none yet — create $dir/<name>.conf; see example.conf)"
-  echo "Run with no argument for the default (shared slideshow.conf)."
+# Print the names of defined slideshows (slideshows/*.conf, excluding example).
+# Usage: slideshow_names <slideshows_dir>   -> one name per line on stdout
+slideshow_names() {
+  local dir="$1" f name
+  [[ -d "$dir" ]] || return 0
+  for f in "$dir"/*.conf; do
+    [[ -e "$f" ]] || continue
+    name="$(basename "$f" .conf)"
+    [[ "$name" == "example" ]] && continue
+    printf '%s\n' "$name"
+  done
 }
 
-# Resolve configuration for an optional compilation argument.
-# Usage: slideshow_init <script_dir> "$@"
-# - sources <script_dir>/slideshow.conf, then profiles/<name>.conf (last wins)
-# - handles --list / -l (prints and exits 0)
-# - validates <name>; unknown or invalid name exits non-zero with the list
-# - sets SLIDESHOW_PROFILE (empty for the default) and a per-compilation
-#   SLIDESHOW_PLAYLIST default when one is not explicitly configured.
-slideshow_init() {
-  local script_dir="$1"; shift
-  local profiles_dir="$script_dir/profiles"
+# Print available slideshows for humans.
+# Usage: slideshow_list <slideshows_dir>
+slideshow_list() {
+  local dir="$1" name found=false
+  echo "Available slideshows:"
+  while IFS= read -r name; do
+    echo "  $name"
+    found=true
+  done < <(slideshow_names "$dir")
+  "$found" || echo "  (none yet — create $dir/<name>.conf; see example.conf)"
+}
 
-  if [[ "${1:-}" == "--list" || "${1:-}" == "-l" ]]; then
-    slideshow_list_profiles "$profiles_dir"
-    exit 0
-  fi
+# Validate a slideshow name: reject path separators and parent refs.
+# Usage: slideshow_validate_name <name>   -> 0 ok, 1 invalid
+slideshow_validate_name() {
+  case "$1" in
+  */* | *..*) return 1 ;;
+  esac
+  return 0
+}
 
-  # shellcheck disable=SC2034  # consumed by the sourcing script
-  SLIDESHOW_PROFILE="${1:-}"
+# Load app settings + a named slideshow's config (last wins), then set
+# SLIDESHOW_NAME and a per-name SLIDESHOW_PLAYLIST default when unset.
+# Usage: slideshow_load <script_dir> <name>   (exits 2 on invalid/unknown name)
+slideshow_load() {
+  local script_dir="$1" name="$2"
+  local slideshows_dir="$script_dir/slideshows"
 
   # shellcheck source=/dev/null
   [[ -f "$script_dir/slideshow.conf" ]] && source "$script_dir/slideshow.conf"
 
-  if [[ -n "$SLIDESHOW_PROFILE" ]]; then
-    case "$SLIDESHOW_PROFILE" in
-      */* | *..*)
-        echo "Error: invalid compilation name '$SLIDESHOW_PROFILE'." >&2
-        exit 2
-        ;;
-    esac
-    local profile_file="$profiles_dir/$SLIDESHOW_PROFILE.conf"
-    if [[ ! -f "$profile_file" ]]; then
-      echo "Error: no compilation named '$SLIDESHOW_PROFILE'." >&2
-      slideshow_list_profiles "$profiles_dir" >&2
-      exit 2
-    fi
-    # shellcheck source=/dev/null
-    source "$profile_file"
+  if ! slideshow_validate_name "$name"; then
+    echo "Error: invalid slideshow name '$name'." >&2
+    exit 2
   fi
+  local conf="$slideshows_dir/$name.conf"
+  if [[ ! -f "$conf" ]]; then
+    echo "Error: no slideshow named '$name'." >&2
+    slideshow_list "$slideshows_dir" >&2
+    exit 2
+  fi
+  # shellcheck source=/dev/null
+  source "$conf"
 
+  # shellcheck disable=SC2034  # consumed by the sourcing script
+  SLIDESHOW_NAME="$name"
   if [[ -z "${SLIDESHOW_PLAYLIST:-}" ]]; then
-    if [[ -n "$SLIDESHOW_PROFILE" ]]; then
-      SLIDESHOW_PLAYLIST="$HOME/.cache/slideshow-playlist-$SLIDESHOW_PROFILE.m3u"
-    else
-      SLIDESHOW_PLAYLIST="$HOME/.cache/slideshow-playlist.m3u"
-    fi
+    SLIDESHOW_PLAYLIST="$HOME/.cache/slideshow-playlist-$name.m3u"
   fi
+}
+
+# Resolve which slideshow to play when no name was given (three-layer) and store
+# the result in the global SLIDESHOW_NAME:
+#   0 slideshows -> message + exit 1
+#   1 slideshow  -> SLIDESHOW_NAME = its name
+#   2+           -> interactive numbered chooser on a TTY; otherwise list + exit 1
+# Sets a global (does NOT echo) so it can run in the main shell where the TTY is
+# real — calling it via "$(...)" would make stdout a pipe and disable the menu.
+# Usage: slideshow_choose <script_dir>   (sets SLIDESHOW_NAME, or exits non-zero)
+slideshow_choose() {
+  local script_dir="$1"
+  local slideshows_dir="$script_dir/slideshows"
+  local -a names=()
+  mapfile -t names < <(slideshow_names "$slideshows_dir")
+
+  if [[ "${#names[@]}" -eq 0 ]]; then
+    echo "No slideshows yet. Create one: copy $slideshows_dir/example.conf to" >&2
+    echo "$slideshows_dir/<name>.conf and set its SLIDESHOW_SOURCES (or use the GUI)." >&2
+    exit 1
+  fi
+  if [[ "${#names[@]}" -eq 1 ]]; then
+    # shellcheck disable=SC2034  # consumed by the sourcing script
+    SLIDESHOW_NAME="${names[0]}"
+    return 0
+  fi
+  if [[ ! -t 0 || ! -t 1 ]]; then
+    echo "Multiple slideshows exist; pass one as the argument:" >&2
+    slideshow_list "$slideshows_dir" >&2
+    exit 1
+  fi
+  echo "Choose a slideshow:" >&2
+  local i=1 n
+  for n in "${names[@]}"; do
+    printf '  %d) %s\n' "$i" "$n" >&2
+    i=$((i + 1))
+  done
+  local choice
+  read -rp "Number: " choice
+  if [[ "$choice" =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#names[@]})); then
+    # shellcheck disable=SC2034  # consumed by the sourcing script
+    SLIDESHOW_NAME="${names[choice - 1]}"
+    return 0
+  fi
+  echo "Invalid selection." >&2
+  exit 1
 }
 
 # Parse SLIDESHOW_SOURCES into SLIDESHOW_ROOTS[] (find start dirs) and
@@ -93,8 +137,8 @@ slideshow_parse_sources() {
     # Trim surrounding whitespace.
     trimmed="${line#"${line%%[![:space:]]*}"}"
     trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
-    [[ -z "$trimmed" ]] && continue   # blank line
-    [[ "$trimmed" == \#* ]] && continue   # comment line
+    [[ -z "$trimmed" ]] && continue     # blank line
+    [[ "$trimmed" == \#* ]] && continue # comment line
 
     # Split "PATH | excludes" on the first '|'.
     if [[ "$trimmed" == *"|"* ]]; then
