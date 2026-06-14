@@ -129,7 +129,7 @@ slideshow_parse_sources() {
   local line trimmed path excludes excl p first
 
   if [[ -z "${SLIDESHOW_SOURCES:-}" ]]; then
-    echo "Error: SLIDESHOW_SOURCES is not set. Copy slideshow.conf.example to slideshow.conf and edit it." >&2
+    echo "Error: SLIDESHOW_SOURCES is not set for this slideshow. Set it in slideshows/<name>.conf (see slideshows/example.conf)." >&2
     exit 2
   fi
 

@@ -151,6 +151,11 @@ all slideshows, so files converted for one are reused by others at no extra cost
 The login service pre-warms **all** slideshows (`--all`) so every playlist is
 ready before first launch.
 
+> **Don't** set `SLIDESHOW_PLAYLIST` in `slideshow.conf` — that would force every
+> slideshow onto one cache file and make them overwrite each other (especially
+> under `--all`). Override it only inside a single `slideshows/<name>.conf` if you
+> need a custom path for that one slideshow.
+
 Want a desktop icon per slideshow? Create a `.desktop` launcher with
 `Exec=…/slideshow.sh <name>` — desktop icons are intentionally not part of this
 project.
