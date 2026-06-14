@@ -9,7 +9,7 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - Parallel TIFF conversion with incremental caching — only re-converts changed files
 - Fade-to-black transitions between items (crossfade.lua, OSD-based — works for both images and videos)
 - On-screen overlay showing the photo date (from EXIF) and filename (photo-info.lua)
-- Configurable via a simple `slideshow.conf` file — no private paths in the repository
+- Configurable via `slideshow.conf` (app-wide settings) and per-slideshow `slideshows/<name>.conf` files — no private paths in the repository
 - systemd user service for playlist pre-generation on login, with optional dependency on a cloud-mount service
 
 ## Requirements
@@ -33,39 +33,46 @@ cd mpv-photo-frame
 #    service, and creates slideshow.conf from the template on first run.
 bash install.sh
 
-# 3. Configure (install.sh created slideshow.conf from the template)
-$EDITOR slideshow.conf   # set SLIDESHOW_SOURCES to your photo folder(s)
-bash install.sh       # re-run if you changed SLIDESHOW_AFTER_SERVICE
+# 3. Create a slideshow (sources live here, one per source folder)
+cp slideshows/example.conf slideshows/home.conf
+$EDITOR slideshows/home.conf      # set SLIDESHOW_SOURCES to your photo folder(s)
+# (Optional) edit slideshow.conf for app-wide settings, then: bash install.sh
 
-# 4. Build the playlist (converts TIFFs, ~few minutes on first run)
-./generate-slideshow-playlist.sh
+# 4. Build the playlist(s) (converts TIFFs, ~few minutes on first run)
+./generate-slideshow-playlist.sh        # builds every slideshow (--all)
 
 # 5. Start the slideshow
-./slideshow.sh
+./slideshow.sh                          # one slideshow plays; several → chooser
 ```
 
 ## Configuration
 
-Edit `slideshow.conf` (install.sh creates it from `slideshow.conf.example` on first run):
+`slideshow.conf` holds **app-wide settings** (install.sh creates it from `slideshow.conf.example` on first run). `SLIDESHOW_SOURCES` lives in each slideshow's own file — see [Slideshows](#slideshows) below.
 
-| Variable                  | Default                           | Description                                                                                                                                                      |
-| ------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SLIDESHOW_SOURCES`       | _(required)_                      | Photo/video library: one source folder per line, optional `\| excl1,excl2` excludes (subfolder names, relative sub-paths like `2020/raw`, or globs like `*/raw`) |
-| `SLIDESHOW_DELAY`         | `10`                              | Seconds to display each image                                                                                                                                    |
-| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache`   | Where to store converted TIFF→JPEG files                                                                                                                         |
-| `SLIDESHOW_PLAYLIST`      | `~/.cache/slideshow-playlist.m3u` | Where to store the generated playlist                                                                                                                            |
-| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                         | systemd service to wait for before generating the playlist                                                                                                       |
+| Variable                  | Default                         | Description                                                |
+| ------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `SLIDESHOW_DELAY`         | `10`                            | Seconds to display each image                              |
+| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache` | Where to store converted TIFF→JPEG files                   |
+| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                       | systemd service to wait for before generating the playlist |
 
-Example `slideshow.conf`:
+Example `slideshow.conf` (settings only):
 
 ```bash
+# slideshow.conf  (app-wide settings; inherited by every slideshow)
+SLIDESHOW_DELAY=12
+SLIDESHOW_OVERLAY_SIZE=large
+```
+
+Example `slideshows/home.conf` (one slideshow; this is where sources live):
+
+```bash
+# slideshows/home.conf  (one slideshow; this is where sources live)
 SLIDESHOW_SOURCES="
-  /mnt/nas/Photos        | Unsorted,To edit   # exclude named subfolders
-  /mnt/nas/Family        | 2019/Unedited       # exclude a specific sub-sub-folder
-  /mnt/nas/Archive       | */RAW,*/Thumbnails  # glob: all RAW/Thumbnails dirs at any depth
+  /mnt/nas/Photos   | Unsorted,To edit
+  /mnt/nas/Family   | 2019/Unedited
+  /mnt/nas/Archive  | */RAW,*/Thumbnails
   /mnt/nas/PhoneBackup
 "
-SLIDESHOW_DELAY=12
 ```
 
 ## mpv Scripts
@@ -109,15 +116,14 @@ the overlay uses your system language, falling back to English.
 
 The date and time lines scale together, keeping their relative proportions. An unknown value falls back to `medium`.
 
-## Compilations (multiple slideshows)
+## Slideshows
 
-A _compilation_ is a named slideshow: one or more source folders, each with
-optional excluded subfolders, plus any other settings you want to override.
-Define one by creating `profiles/<name>.conf` (next to `install.sh`) and setting
-at least its `SLIDESHOW_SOURCES`:
+Each slideshow is a file in `slideshows/<name>.conf`. All slideshows are equal —
+there is no default. Define one by creating a file there and setting at least its
+`SLIDESHOW_SOURCES`:
 
 ```bash
-# profiles/urlaub.conf
+# slideshows/urlaub.conf
 SLIDESHOW_SOURCES="
   /home/you/Pictures/Holidays | private,raw
 "
@@ -127,33 +133,36 @@ SLIDESHOW_DELAY=6
 Then play it, or list what's defined:
 
 ```bash
-./slideshow.sh urlaub      # play the "urlaub" compilation
-./slideshow.sh --list      # list available compilations
-./slideshow.sh             # default: the shared slideshow.conf (unchanged behaviour)
+./slideshow.sh urlaub      # play the "urlaub" slideshow
+./slideshow.sh --list      # list available slideshows
+./slideshow.sh             # 0 slideshows → prompt to create one
+                           # 1 slideshow  → plays it automatically
+                           # 2+ slideshows → interactive numbered chooser (TTY)
+                           #               or list + exit (non-interactive)
 ```
 
-Resolution is layered, last wins: built-in default → `slideshow.conf` (shared) →
-`profiles/<name>.conf`. Any setting a compilation omits falls back to `slideshow.conf`,
-then to the built-in default, so nothing is ever unset.
+Resolution is layered, last wins: built-in default → `slideshow.conf` (app-wide
+settings) → `slideshows/<name>.conf`. Any setting a slideshow omits falls back to
+`slideshow.conf`, then to the built-in default, so nothing is ever unset.
 
-Each compilation gets its **own** playlist cache
-(`~/.cache/slideshow-playlist-<name>.m3u`); the no-argument default keeps
-`~/.cache/slideshow-playlist.m3u`. (Setting a global `SLIDESHOW_PLAYLIST` in the shared `slideshow.conf` overrides this and forces all compilations onto one cache — set it only inside a single `profiles/<name>.conf` if you need a custom path.) The TIFF→JPEG cache is shared across all
-compilations, so files converted for one are reused by others at no extra cost.
-The login service pre-builds only the default; other compilations build their
-cache on first launch and reuse it thereafter.
+Each slideshow has its **own** playlist cache
+(`~/.cache/slideshow-playlist-<name>.m3u`). The TIFF→JPEG cache is shared across
+all slideshows, so files converted for one are reused by others at no extra cost.
+The login service pre-warms **all** slideshows (`--all`) so every playlist is
+ready before first launch.
 
-Want a desktop icon per compilation? Create a `.desktop` launcher with
+Want a desktop icon per slideshow? Create a `.desktop` launcher with
 `Exec=…/slideshow.sh <name>` — desktop icons are intentionally not part of this
 project.
 
 ## Regenerating the Playlist
 
-The playlist is cached in `~/.cache/slideshow-playlist.m3u`. Delete it and re-run `generate-slideshow-playlist.sh` whenever you add new photos.
+Each slideshow's playlist is cached as `~/.cache/slideshow-playlist-<name>.m3u`. Delete the cache(s) and re-run `generate-slideshow-playlist.sh` whenever you add new photos.
 
 ```bash
-rm ~/.cache/slideshow-playlist.m3u
-./generate-slideshow-playlist.sh
+rm -f ~/.cache/slideshow-playlist-*.m3u
+./generate-slideshow-playlist.sh          # rebuild all
+./generate-slideshow-playlist.sh home     # or just one
 ```
 
 ## Cloud Storage (rclone, sshfs, SMB, …)
@@ -193,9 +202,13 @@ If your photos live on a cloud service or NAS, mount the storage as a local dire
 3. Configure mpv-photo-frame to wait for it:
 
    ```bash
-   # slideshow.conf
-   SLIDESHOW_SOURCES="${HOME}/Photos"
+   # slideshow.conf  (app-wide settings)
    SLIDESHOW_AFTER_SERVICE="rclone-onedrive.service"
+   ```
+
+   ```bash
+   # slideshows/onedrive.conf  (the slideshow pointing at the mount)
+   SLIDESHOW_SOURCES="${HOME}/Photos"
    ```
 
 4. Re-run `install.sh` — it writes the `After=` line into the installed service unit.
