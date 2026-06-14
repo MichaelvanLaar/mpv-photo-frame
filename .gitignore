@@ -6,5 +6,5 @@ docs/superpowers/
 .claude/settings.local.json
 .claude/local.md
 
-profiles/*.conf
-!profiles/example.conf
+slideshows/*.conf
+!slideshows/example.conf

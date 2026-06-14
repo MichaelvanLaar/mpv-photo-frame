@@ -19,6 +19,11 @@ if [[ ${#missing[@]} -gt 0 ]]; then
 fi
 echo "Dependencies OK."
 
+# Migrate an old-layout install (default slideshow in slideshow.conf + profiles/).
+# shellcheck source=scripts/migrate-config.sh
+source "$SCRIPT_DIR/scripts/migrate-config.sh"
+migrate_config "$SCRIPT_DIR"
+
 # Install mpv Lua scripts
 mkdir -p "$MPV_SCRIPTS"
 for lua in "$SCRIPT_DIR/mpv-scripts/"*.lua; do
@@ -30,12 +35,13 @@ done
 # Make shell scripts executable
 chmod +x "$SCRIPT_DIR/slideshow.sh" "$SCRIPT_DIR/generate-slideshow-playlist.sh"
 
-# Set up slideshow.conf
+# Set up slideshow.conf (app-wide settings; sources live in slideshows/<name>.conf)
 if [[ ! -f "$SCRIPT_DIR/slideshow.conf" ]]; then
   cp "$SCRIPT_DIR/slideshow.conf.example" "$SCRIPT_DIR/slideshow.conf"
   echo ""
-  echo "Created slideshow.conf from slideshow.conf.example."
-  echo ">>> Edit $SCRIPT_DIR/slideshow.conf and set SLIDESHOW_SOURCES to your photo folder(s). <<<"
+  echo "Created slideshow.conf (settings) from slideshow.conf.example."
+  echo ">>> Create a slideshow: copy slideshows/example.conf to slideshows/<name>.conf"
+  echo "    and set its SLIDESHOW_SOURCES. <<<"
   echo ""
 else
   echo "slideshow.conf already exists — skipping."
@@ -56,18 +62,18 @@ SERVICE_FILE="$SYSTEMD_USER_DIR/slideshow-playlist.service"
   echo ""
   echo "[Service]"
   echo "Type=oneshot"
-  echo "ExecStart=$SCRIPT_DIR/generate-slideshow-playlist.sh"
+  echo "ExecStart=$SCRIPT_DIR/generate-slideshow-playlist.sh --all"
   echo ""
   echo "[Install]"
   echo "WantedBy=default.target"
-} > "$SERVICE_FILE"
+} >"$SERVICE_FILE"
 
 systemctl --user daemon-reload
 echo "Installed: $SERVICE_FILE"
 
 echo ""
 echo "Done. Next steps:"
-echo "  1. Edit slideshow.conf (set SLIDESHOW_SOURCES and optionally SLIDESHOW_AFTER_SERVICE)"
-echo "  2. Re-run install.sh after editing slideshow.conf to rebuild the service unit"
+echo "  1. Create a slideshow: cp slideshows/example.conf slideshows/<name>.conf, set SLIDESHOW_SOURCES"
+echo "  2. (Optional) edit slideshow.conf for app-wide settings / SLIDESHOW_AFTER_SERVICE, then re-run install.sh"
 echo "  3. systemctl --user enable --now slideshow-playlist.service"
-echo "  4. ./slideshow.sh        (or: ./slideshow.sh <name> for a compilation — see profiles/example.conf)"
+echo "  4. ./slideshow.sh            (no name = auto-pick / chooser; or ./slideshow.sh <name>)"
