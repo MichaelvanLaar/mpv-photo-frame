@@ -79,11 +79,11 @@ SLIDESHOW_SOURCES="
 
 ## mpv Scripts
 
-| Script                   | Description                                                                                                                                        |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `crossfade.lua`          | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                                                      |
-| `photo-info.lua`         | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `slideshow.conf` (see below).                      |
-| `blurred-background.lua` | Fills letterbox/pillarbox bars with a stretched, blurred copy of the photo/video. Off by default — enable with `SLIDESHOW_BLURRED_BACKGROUND=yes`. |
+| Script                   | Description                                                                                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crossfade.lua`          | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                                                                                                                 |
+| `photo-info.lua`         | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `slideshow.conf` (see below).                                                                                 |
+| `blurred-background.lua` | Fills letterbox/pillarbox bars with a stretched, blurred copy of the photo/video. Off by default — see [Customising the blurred background](#customising-the-blurred-background-blurred-backgroundlua) below. |
 
 Installed to `~/.config/mpv/scripts/` by `install.sh`.
 
@@ -118,6 +118,27 @@ the overlay uses your system language, falling back to English.
 | `xlarge` | 1.8×  |                                |
 
 The date and time lines scale together, keeping their relative proportions. An unknown value falls back to `medium`.
+
+### Customising the blurred background (blurred-background.lua)
+
+Off by default. Set `SLIDESHOW_BLURRED_BACKGROUND` in `slideshow.conf` to turn it on:
+
+| Value         | Photos                              | Video                                                                 |
+| ------------- | ----------------------------------- | --------------------------------------------------------------------- |
+| `no`          | plain letterbox/pillarbox (default) | plain letterbox/pillarbox                                             |
+| `yes`         | blurred background                  | blurred background — forces software video decode (no hwdec)          |
+| `photos-only` | blurred background                  | plain letterbox/pillarbox — video decodes normally (hwdec unaffected) |
+
+Requires `exiftool` (see [Requirements](#requirements)) to read a photo/video's
+rotation before mpv opens it — this avoids a race where mpv doesn't know a
+file's rotation until decode has already started.
+
+Blurring video forces `hwdec=no` (software decode) for the whole mpv session,
+because hardware-decoded frames (e.g. vaapi surfaces) can't be blurred without
+extra handling this script doesn't attempt. That's fine on capable hardware,
+but can make video CPU-bound on weaker machines. If you notice slow starts or
+choppy/slow-motion video playback after enabling this, either switch to
+`photos-only`, or leave it at `no` and use plain letterboxing for everything.
 
 ## Slideshows
 

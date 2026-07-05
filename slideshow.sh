@@ -51,7 +51,7 @@ script_opts=()
 [[ -n "${SLIDESHOW_OVERLAY_POSITION:-}" ]] && script_opts+=(--script-opts-append="photo-info-position=$SLIDESHOW_OVERLAY_POSITION")
 [[ -n "${SLIDESHOW_OVERLAY_LANG:-}" ]] && script_opts+=(--script-opts-append="photo-info-lang=$SLIDESHOW_OVERLAY_LANG")
 [[ -n "${SLIDESHOW_OVERLAY_CLOCK:-}" ]] && script_opts+=(--script-opts-append="photo-info-clock=$SLIDESHOW_OVERLAY_CLOCK")
-[[ -n "${SLIDESHOW_BLURRED_BACKGROUND:-}" ]] && script_opts+=(--script-opts-append="blurred-background-enabled=$SLIDESHOW_BLURRED_BACKGROUND")
+[[ -n "${SLIDESHOW_BLURRED_BACKGROUND:-}" ]] && script_opts+=(--script-opts-append="blurred-background-mode=$SLIDESHOW_BLURRED_BACKGROUND")
 
 mpv \
   --fullscreen \

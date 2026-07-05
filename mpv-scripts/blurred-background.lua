@@ -4,8 +4,25 @@
 local mp = require 'mp'
 local utils = require 'mp.utils'
 
-local opts = { enabled = false }
+local opts = { mode = "no" } -- no | yes | photos-only
 require("mp.options").read_options(opts, "blurred-background")
+
+local blur_photos = (opts.mode == "yes" or opts.mode == "photos-only")
+local blur_videos = (opts.mode == "yes")
+
+-- Video decode is the expensive, hardware-dependent case (see the hwdec=no
+-- note below); photos are always cheap and correct regardless of hardware,
+-- since they're a single frame with no hwdec involved. "photos-only" lets
+-- videos keep normal hardware decode and plain letterboxing on machines
+-- where the CPU cost of software-decoding video isn't worth it.
+local VIDEO_EXTENSIONS = {
+    mp4 = true, mov = true, avi = true, mkv = true, m4v = true, ["3gp"] = true,
+}
+
+local function is_video(path)
+    local ext = path and path:match("%.([%w]+)$")
+    return ext ~= nil and VIDEO_EXTENSIONS[ext:lower()] == true
+end
 
 local BLUR_SIGMA = 20 -- fixed; blurring at 1/4 resolution keeps this cheap
 
@@ -67,15 +84,26 @@ local function detect_rotate(path)
     return orientation_map[info.Orientation] or 0
 end
 
-if opts.enabled then
-    -- Hardware-decoded frames (e.g. vaapi nv12 surfaces) live in GPU memory
-    -- and can't be consumed by gblur/scale/overlay without an hwdownload step
-    -- whose target format we can't know in advance. This feature always
-    -- needs software-domain pixel access anyway, so decode in software.
-    mp.set_property("hwdec", "no")
+if blur_photos then
+    if blur_videos then
+        -- Hardware-decoded frames (e.g. vaapi nv12 surfaces) live in GPU memory
+        -- and can't be consumed by gblur/scale/overlay without an hwdownload
+        -- step whose target format we can't know in advance (and guessing
+        -- wrong permanently disables the filter for that file, unlike the
+        -- rotation race below, which is merely wrong-looking for a frame).
+        -- This feature needs software-domain pixel access anyway, so decode
+        -- in software rather than try to detect hwdec use in advance.
+        mp.set_property("hwdec", "no")
+    end
 
     mp.add_hook("on_load", 50, function()
         local path = mp.get_property("stream-open-filename")
+
+        if is_video(path) and not blur_videos then
+            mp.set_property("vf", "") -- don't inherit a previous file's blur vf
+            return
+        end
+
         local rotate = detect_rotate(path)
 
         local w = osd_dim("osd-width", 1920)
@@ -94,4 +122,4 @@ if opts.enabled then
     end)
 end
 
-return { build_vf = build_vf }
+return { build_vf = build_vf, is_video = is_video }

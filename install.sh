@@ -51,7 +51,7 @@ fi
 # shellcheck source=/dev/null
 [[ -f "$SCRIPT_DIR/slideshow.conf" ]] && source "$SCRIPT_DIR/slideshow.conf"
 
-if [[ "${SLIDESHOW_BLURRED_BACKGROUND:-}" == "yes" ]] && ! command -v exiftool &>/dev/null; then
+if [[ "${SLIDESHOW_BLURRED_BACKGROUND:-}" =~ ^(yes|photos-only)$ ]] && ! command -v exiftool &>/dev/null; then
   echo "Warning: SLIDESHOW_BLURRED_BACKGROUND=yes requires exiftool, which is not installed."
   echo "  Install with:  sudo apt install libimage-exiftool-perl"
 fi

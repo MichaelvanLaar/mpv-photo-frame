@@ -35,4 +35,7 @@ SLIDESHOW_DELAY=10
 # --- Blurred background --------------------------------------------------
 # Fill letterbox/pillarbox bars with a stretched, blurred copy of the photo
 # or video instead of plain black (like portrait video shown on a 16:9 TV).
-# SLIDESHOW_BLURRED_BACKGROUND=yes   # yes | no (default: no)
+# Requires exiftool. Blurring video forces software video decode (no hwdec),
+# which can be CPU-heavy on weak hardware -- use photos-only to avoid that
+# and let video decode normally, with plain letterboxing for video.
+# SLIDESHOW_BLURRED_BACKGROUND=yes   # yes | no | photos-only (default: no)

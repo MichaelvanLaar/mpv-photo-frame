@@ -41,6 +41,29 @@ print(mod.build_vf('"$1"', '"$2"'))
 '
 }
 
+is_video() { # is_video <path>  -> prints "true" or "false"
+  lua -e '
+package.preload["mp"] = function()
+  return {
+    register_event = function() end,
+    get_property_number = function() end,
+    get_property = function() end,
+    set_property = function() end,
+    command_native = function() end,
+    add_hook = function() end,
+  }
+end
+package.preload["mp.options"] = function()
+  return { read_options = function() end }
+end
+package.preload["mp.utils"] = function()
+  return { parse_json = function() end }
+end
+local mod = dofile("'"$LUA_SCRIPT"'")
+print(mod.is_video("'"$1"'"))
+'
+}
+
 landscape="$(build_vf 1920 1080)"
 check_contains "landscape: bg cover-scaled to screen size" "scale=1920:1080:force_original_aspect_ratio=increase" "$landscape"
 check_contains "landscape: bg downscaled to 1/4 before blur" "scale=480:270,gblur=sigma=20" "$landscape"
@@ -53,6 +76,11 @@ check_contains "portrait: quarter-res divides cleanly" "scale=270:480,gblur=sigm
 
 odd="$(build_vf 1921 1081)"
 check_contains "non-divisible dims: quarter-res floors down" "scale=480:270,gblur=sigma=20" "$odd"
+
+check_contains "is_video: .mp4 is a video" "true" "$(is_video "/path/to/clip.mp4")"
+check_contains "is_video: .MP4 matched case-insensitively" "true" "$(is_video "/path/to/clip.MP4")"
+check_contains "is_video: .jpg is not a video" "false" "$(is_video "/path/to/photo.jpg")"
+check_contains "is_video: no extension is not a video" "false" "$(is_video "/path/to/noext")"
 
 echo ""
 if [[ "$fails" -eq 0 ]]; then
