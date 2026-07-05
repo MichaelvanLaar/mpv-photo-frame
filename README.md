@@ -17,7 +17,7 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - mpv
 - ffmpeg (provides `ffprobe`)
 - ImageMagick (provides `convert`)
-- exiftool (only needed for `SLIDESHOW_BLURRED_BACKGROUND=yes`, to detect photo/video rotation)
+- exiftool (only needed for `SLIDESHOW_BLURRED_BACKGROUND=yes` or `photos-only`, to detect photo/video rotation)
 
 ```bash
 sudo apt install mpv ffmpeg imagemagick libimage-exiftool-perl
