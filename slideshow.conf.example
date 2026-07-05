@@ -31,3 +31,8 @@ SLIDESHOW_DELAY=10
 # SLIDESHOW_OVERLAY_POSITION=bottom-left   # bottom-left | bottom-right | top-left | top-right
 # SLIDESHOW_OVERLAY_LANG=                  # en | de | fr | es  (empty = system language, then en)
 # SLIDESHOW_OVERLAY_CLOCK=                 # 12 | 24            (empty = language default)
+
+# --- Blurred background --------------------------------------------------
+# Fill letterbox/pillarbox bars with a stretched, blurred copy of the photo
+# or video instead of plain black (like portrait video shown on a 16:9 TV).
+# SLIDESHOW_BLURRED_BACKGROUND=yes   # yes | no (default: no)

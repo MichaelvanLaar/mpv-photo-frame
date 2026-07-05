@@ -41,16 +41,17 @@ if ! grep -q '[^[:space:]]' "$SLIDESHOW_PLAYLIST" 2>/dev/null; then
   exit 1
 fi
 
-# Overlay options: forward only the ones set in slideshow.conf; unset ones use the
-# photo-info.lua built-in defaults (see slideshow.conf.example).
-overlay_opts=()
-[[ -n "${SLIDESHOW_OVERLAY_FONT:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-font=$SLIDESHOW_OVERLAY_FONT")
-[[ -n "${SLIDESHOW_OVERLAY_SIZE:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-size=$SLIDESHOW_OVERLAY_SIZE")
-[[ -n "${SLIDESHOW_OVERLAY_COLOR:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-color=$SLIDESHOW_OVERLAY_COLOR")
-[[ -n "${SLIDESHOW_OVERLAY_OUTLINE:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-outline=$SLIDESHOW_OVERLAY_OUTLINE")
-[[ -n "${SLIDESHOW_OVERLAY_POSITION:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-position=$SLIDESHOW_OVERLAY_POSITION")
-[[ -n "${SLIDESHOW_OVERLAY_LANG:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-lang=$SLIDESHOW_OVERLAY_LANG")
-[[ -n "${SLIDESHOW_OVERLAY_CLOCK:-}" ]] && overlay_opts+=(--script-opts-append="photo-info-clock=$SLIDESHOW_OVERLAY_CLOCK")
+# Script options: forward only the ones set in slideshow.conf; unset ones use
+# each Lua script's built-in defaults (see slideshow.conf.example).
+script_opts=()
+[[ -n "${SLIDESHOW_OVERLAY_FONT:-}" ]] && script_opts+=(--script-opts-append="photo-info-font=$SLIDESHOW_OVERLAY_FONT")
+[[ -n "${SLIDESHOW_OVERLAY_SIZE:-}" ]] && script_opts+=(--script-opts-append="photo-info-size=$SLIDESHOW_OVERLAY_SIZE")
+[[ -n "${SLIDESHOW_OVERLAY_COLOR:-}" ]] && script_opts+=(--script-opts-append="photo-info-color=$SLIDESHOW_OVERLAY_COLOR")
+[[ -n "${SLIDESHOW_OVERLAY_OUTLINE:-}" ]] && script_opts+=(--script-opts-append="photo-info-outline=$SLIDESHOW_OVERLAY_OUTLINE")
+[[ -n "${SLIDESHOW_OVERLAY_POSITION:-}" ]] && script_opts+=(--script-opts-append="photo-info-position=$SLIDESHOW_OVERLAY_POSITION")
+[[ -n "${SLIDESHOW_OVERLAY_LANG:-}" ]] && script_opts+=(--script-opts-append="photo-info-lang=$SLIDESHOW_OVERLAY_LANG")
+[[ -n "${SLIDESHOW_OVERLAY_CLOCK:-}" ]] && script_opts+=(--script-opts-append="photo-info-clock=$SLIDESHOW_OVERLAY_CLOCK")
+[[ -n "${SLIDESHOW_BLURRED_BACKGROUND:-}" ]] && script_opts+=(--script-opts-append="blurred-background-enabled=$SLIDESHOW_BLURRED_BACKGROUND")
 
 mpv \
   --fullscreen \
@@ -58,5 +59,5 @@ mpv \
   --image-display-duration="$DELAY" \
   --loop-playlist=inf \
   --shuffle \
-  "${overlay_opts[@]}" \
+  "${script_opts[@]}" \
   --playlist="$SLIDESHOW_PLAYLIST"

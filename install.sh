@@ -51,6 +51,11 @@ fi
 # shellcheck source=/dev/null
 [[ -f "$SCRIPT_DIR/slideshow.conf" ]] && source "$SCRIPT_DIR/slideshow.conf"
 
+if [[ "${SLIDESHOW_BLURRED_BACKGROUND:-}" == "yes" ]] && ! command -v exiftool &>/dev/null; then
+  echo "Warning: SLIDESHOW_BLURRED_BACKGROUND=yes requires exiftool, which is not installed."
+  echo "  Install with:  sudo apt install libimage-exiftool-perl"
+fi
+
 # Install systemd user service
 mkdir -p "$SYSTEMD_USER_DIR"
 SERVICE_FILE="$SYSTEMD_USER_DIR/slideshow-playlist.service"

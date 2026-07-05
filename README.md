@@ -17,9 +17,10 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - mpv
 - ffmpeg (provides `ffprobe`)
 - ImageMagick (provides `convert`)
+- exiftool (only needed for `SLIDESHOW_BLURRED_BACKGROUND=yes`, to detect photo/video rotation)
 
 ```bash
-sudo apt install mpv ffmpeg imagemagick
+sudo apt install mpv ffmpeg imagemagick libimage-exiftool-perl
 ```
 
 ## Quick Start
@@ -49,11 +50,12 @@ $EDITOR slideshows/home.conf      # set SLIDESHOW_SOURCES to your photo folder(s
 
 `slideshow.conf` holds **app-wide settings** (install.sh creates it from `slideshow.conf.example` on first run). `SLIDESHOW_SOURCES` lives in each slideshow's own file — see [Slideshows](#slideshows) below.
 
-| Variable                  | Default                         | Description                                                |
-| ------------------------- | ------------------------------- | ---------------------------------------------------------- |
-| `SLIDESHOW_DELAY`         | `10`                            | Seconds to display each image                              |
-| `SLIDESHOW_TIFF_CACHE`    | `~/.cache/slideshow-tiff-cache` | Where to store converted TIFF→JPEG files                   |
-| `SLIDESHOW_AFTER_SERVICE` | _(empty)_                       | systemd service to wait for before generating the playlist |
+| Variable                       | Default                         | Description                                                                   |
+| ------------------------------ | ------------------------------- | ----------------------------------------------------------------------------- |
+| `SLIDESHOW_DELAY`              | `10`                            | Seconds to display each image                                                 |
+| `SLIDESHOW_TIFF_CACHE`         | `~/.cache/slideshow-tiff-cache` | Where to store converted TIFF→JPEG files                                      |
+| `SLIDESHOW_AFTER_SERVICE`      | _(empty)_                       | systemd service to wait for before generating the playlist                    |
+| `SLIDESHOW_BLURRED_BACKGROUND` | `no`                            | Fill letterbox/pillarbox bars with a stretched, blurred copy instead of black |
 
 Example `slideshow.conf` (settings only):
 
@@ -77,10 +79,11 @@ SLIDESHOW_SOURCES="
 
 ## mpv Scripts
 
-| Script           | Description                                                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `crossfade.lua`  | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                                 |
-| `photo-info.lua` | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `slideshow.conf` (see below). |
+| Script                   | Description                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crossfade.lua`          | Fades each item in from and out to black. Adjust `FADE` at the top for speed.                                                                      |
+| `photo-info.lua`         | Displays a date/filename overlay. Font, size, colour, position and language are configurable in `slideshow.conf` (see below).                      |
+| `blurred-background.lua` | Fills letterbox/pillarbox bars with a stretched, blurred copy of the photo/video. Off by default — enable with `SLIDESHOW_BLURRED_BACKGROUND=yes`. |
 
 Installed to `~/.config/mpv/scripts/` by `install.sh`.
 
