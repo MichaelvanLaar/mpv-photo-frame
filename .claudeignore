@@ -1,3 +1,8 @@
 # Gitignored scratch/working dirs — skip startup indexing
 docs/superpowers/
 .superpowers/
+
+# Machine-local AI tooling state (binary/cache, not useful to read)
+.headroom/
+.serena/
+.codegraph/

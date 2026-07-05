@@ -26,15 +26,18 @@ No build step. Verify loop (install with `apt install shellcheck` / `go install 
 shellcheck *.sh tests/*.sh            # lint Bash scripts (incl. tests/)
 shfmt -i 2 -d .                       # check Bash formatting (2-space indent)
 luacheck mpv-scripts/                 # lint Lua mpv scripts
-bash tests/parse-sources.test.sh      # run parser unit tests
+for f in tests/*.test.sh; do bash "$f"; done   # run all unit tests
 ```
 
 ## Structure
 
 - `*.sh` — Bash entrypoints (install, playlist generation, slideshow launch)
-- `mpv-scripts/` — Lua mpv scripts: `crossfade.lua` (fade transitions), `photo-info.lua` (overlay)
+- `mpv-scripts/` — Lua mpv scripts: `crossfade.lua` (fade transitions), `photo-info.lua` (overlay), `blurred-background.lua` (letterbox/pillarbox fill)
+- `slideshows/<name>.conf` — one file per slideshow (sources + per-slideshow overrides); every slideshow is equal, there's no default
 - `systemd/` — user service for playlist pre-generation on login
-- `slideshow.conf.example` — documented config template; real `slideshow.conf` is gitignored
+- `slideshow.conf.example` — documented config template (app-wide settings); real `slideshow.conf` is gitignored
+
+Local git config (not tracked, set once per clone): `git config core.hooksPath .githooks` — wires up `scripts/sync-config-table.sh`, which keeps the Key Config Files table above in sync on commit.
 
 ## Conventions
 
