@@ -49,6 +49,21 @@ check "minor bump resets patch" "1.5.0" "$(next_version "1.4.2" "minor")"
 check "major bump resets minor+patch" "2.0.0" "$(next_version "1.4.2" "major")"
 check "patch bump from x.y.0" "0.1.1" "$(next_version "0.1.0" "patch")"
 
+section="$(commits 'feat: ✨ add blur toggle' 'fix: 🐛 crash on empty list' | format_changelog_section "1.4.0" "2026-07-05")"
+check "section: header" "## [1.4.0] - 2026-07-05" "$(head -n1 <<<"$section")"
+check "section: has Added" "true" "$([[ "$section" == *"### Added"* ]] && echo true || echo false)"
+check "section: Added bullet" "true" "$([[ "$section" == *"- ✨ add blur toggle"* ]] && echo true || echo false)"
+check "section: has Fixed" "true" "$([[ "$section" == *"### Fixed"* ]] && echo true || echo false)"
+check "section: Fixed bullet" "true" "$([[ "$section" == *"- 🐛 crash on empty list"* ]] && echo true || echo false)"
+
+docs_only="$(commits 'docs: 📝 fix typo' | format_changelog_section "1.4.1" "2026-07-06")"
+check "docs-only: no Added section" "false" "$([[ "$docs_only" == *"### Added"* ]] && echo true || echo false)"
+check "docs-only: no Fixed section" "false" "$([[ "$docs_only" == *"### Fixed"* ]] && echo true || echo false)"
+check "docs-only: has Docs" "true" "$([[ "$docs_only" == *"### Docs"* ]] && echo true || echo false)"
+
+chore_excluded="$(commits 'fix: 🐛 x' 'chore: 🔧 internal cleanup' | format_changelog_section "1.4.2" "2026-07-07")"
+check "chore excluded from output" "false" "$([[ "$chore_excluded" == *"internal cleanup"* ]] && echo true || echo false)"
+
 echo
 if [[ $fails -eq 0 ]]; then
   echo "All tests passed."

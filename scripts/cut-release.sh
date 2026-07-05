@@ -61,3 +61,47 @@ next_version() {
     ;;
   esac
 }
+
+# format_changelog_section <version> <date>  -> prints a Markdown section,
+# reading NUL-terminated full commit messages from stdin (same format as
+# bump_type_for_commits).
+format_changelog_section() {
+  local version="$1" date="$2"
+  local -a added=() fixed=() changed=() docs=()
+  local record subject type desc
+
+  while IFS= read -r -d '' record; do
+    [[ -z "$record" ]] && continue
+    subject="${record%%$'\n'*}"
+    if [[ "$subject" =~ ^([a-z]+)(\([^\)]*\))?\!?:[[:space:]](.*)$ ]]; then
+      type="${BASH_REMATCH[1]}"
+      desc="${BASH_REMATCH[3]}"
+      case "$type" in
+      feat) added+=("$desc") ;;
+      fix) fixed+=("$desc") ;;
+      refactor | perf | style | build) changed+=("$desc") ;;
+      docs) docs+=("$desc") ;;
+      *) ;; # chore/test/ci/unrecognized: excluded
+      esac
+    fi
+  done
+
+  printf '## [%s] - %s\n' "$version" "$date"
+  local d
+  if [[ "${#added[@]}" -gt 0 ]]; then
+    printf '\n### Added\n'
+    for d in "${added[@]}"; do printf -- '- %s\n' "$d"; done
+  fi
+  if [[ "${#fixed[@]}" -gt 0 ]]; then
+    printf '\n### Fixed\n'
+    for d in "${fixed[@]}"; do printf -- '- %s\n' "$d"; done
+  fi
+  if [[ "${#changed[@]}" -gt 0 ]]; then
+    printf '\n### Changed\n'
+    for d in "${changed[@]}"; do printf -- '- %s\n' "$d"; done
+  fi
+  if [[ "${#docs[@]}" -gt 0 ]]; then
+    printf '\n### Docs\n'
+    for d in "${docs[@]}"; do printf -- '- %s\n' "$d"; done
+  fi
+}
