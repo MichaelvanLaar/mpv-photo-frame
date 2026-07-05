@@ -42,6 +42,13 @@ check "footer BREAKING CHANGE -> major" "major" "$(commits $'feat: add x\n\nBREA
 check "major wins over feat+fix" "major" "$(commits 'feat: ✨ x' 'fix!: 💥 y' | bump_type_for_commits)"
 check "unrecognized type alone -> none" "none" "$(commits 'wip: not a real type' | bump_type_for_commits)"
 
+check "no current version -> 1.0.0 (patch)" "1.0.0" "$(next_version "" "patch")"
+check "no current version -> 1.0.0 (major)" "1.0.0" "$(next_version "" "major")"
+check "patch bump" "1.4.3" "$(next_version "1.4.2" "patch")"
+check "minor bump resets patch" "1.5.0" "$(next_version "1.4.2" "minor")"
+check "major bump resets minor+patch" "2.0.0" "$(next_version "1.4.2" "major")"
+check "patch bump from x.y.0" "0.1.1" "$(next_version "0.1.0" "patch")"
+
 echo
 if [[ $fails -eq 0 ]]; then
   echo "All tests passed."

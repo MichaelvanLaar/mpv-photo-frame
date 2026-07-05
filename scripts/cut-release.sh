@@ -39,3 +39,25 @@ bump_type_for_commits() {
     echo "none"
   fi
 }
+
+# next_version <current_or_empty> <bump>  -> prints the next bare semver.
+next_version() {
+  local current="$1" bump="$2"
+  if [[ -z "$current" ]]; then
+    echo "1.0.0"
+    return
+  fi
+  local major minor patch
+  IFS='.' read -r major minor patch <<<"$current"
+  case "$bump" in
+  major)
+    echo "$((major + 1)).0.0"
+    ;;
+  minor)
+    echo "$major.$((minor + 1)).0"
+    ;;
+  patch)
+    echo "$major.$minor.$((patch + 1))"
+    ;;
+  esac
+}
