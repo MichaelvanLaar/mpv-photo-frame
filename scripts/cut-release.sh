@@ -105,3 +105,23 @@ format_changelog_section() {
     for d in "${docs[@]}"; do printf -- '- %s\n' "$d"; done
   fi
 }
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  set -euo pipefail
+  case "${1:-}" in
+  bump)
+    bump_type_for_commits
+    ;;
+  next-version)
+    next_version "${2:-}" "${3:-}"
+    ;;
+  changelog)
+    format_changelog_section "${2:-}" "${3:-}"
+    ;;
+  *)
+    echo "Usage: cut-release.sh bump | next-version <current> <bump> | changelog <version> <date>" >&2
+    echo "  bump and changelog read NUL-terminated commit messages from stdin." >&2
+    exit 2
+    ;;
+  esac
+fi
