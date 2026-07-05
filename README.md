@@ -46,6 +46,27 @@ $EDITOR slideshows/home.conf      # set SLIDESHOW_SOURCES to your photo folder(s
 ./slideshow.sh                          # one slideshow plays; several → chooser
 ```
 
+## Updating
+
+Check what version you have:
+
+```bash
+cat VERSION
+```
+
+See what changed since then: [CHANGELOG.md](CHANGELOG.md), or the
+[Releases page](https://github.com/michaelvanlaar/mpv-photo-frame/releases).
+
+Update to the latest version:
+
+```bash
+git pull
+bash install.sh
+```
+
+`install.sh` is safe to re-run — it already handles config-layout migrations
+automatically and leaves an existing `slideshow.conf` untouched.
+
 ## Configuration
 
 `slideshow.conf` holds **app-wide settings** (install.sh creates it from `slideshow.conf.example` on first run). `SLIDESHOW_SOURCES` lives in each slideshow's own file — see [Slideshows](#slideshows) below.
