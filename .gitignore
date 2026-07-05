@@ -8,3 +8,8 @@ docs/superpowers/
 
 slideshows/*.conf
 !slideshows/example.conf
+
+# AI tooling — machine-local, must not be committed
+.headroom/
+.serena/
+.codegraph/
