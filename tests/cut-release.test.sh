@@ -28,6 +28,21 @@ commits() {
   done
 }
 
+# git_log_commits <msg1> [msg2...] -> writes NUL-terminated messages to
+# stdout, replicating `git log --format=%B%x00`'s real behavior: git's
+# tformat separator prepends a "\n" before every record except the first.
+git_log_commits() {
+  local m first=true
+  for m in "$@"; do
+    if $first; then
+      first=false
+    else
+      printf '\n'
+    fi
+    printf '%s\n\0' "$m"
+  done
+}
+
 check "no commits -> none" "none" "$(commits | bump_type_for_commits)"
 check "only chore -> none" "none" "$(commits 'chore: 🔧 tidy up' | bump_type_for_commits)"
 check "only chore+test+ci -> none" "none" "$(commits 'chore: 🔧 x' 'test: ✅ y' 'ci: 💚 z' | bump_type_for_commits)"
@@ -41,6 +56,13 @@ check "bang with scope -> major" "major" "$(commits 'fix(config)!: 💥 x' | bum
 check "footer BREAKING CHANGE -> major" "major" "$(commits $'feat: add x\n\nBREAKING CHANGE: config format changed' | bump_type_for_commits)"
 check "major wins over feat+fix" "major" "$(commits 'feat: ✨ x' 'fix!: 💥 y' | bump_type_for_commits)"
 check "unrecognized type alone -> none" "none" "$(commits 'wip: not a real type' | bump_type_for_commits)"
+
+# Regression: real `git log --format=%B%x00` output prepends "\n" before
+# every record but the first (git's tformat separator). commits() above
+# doesn't reproduce this, so it can't catch a subject-extraction bug that
+# only trips on records 2+.
+check "real git-log separator: feat as 2nd record -> minor" "minor" "$(git_log_commits 'fix: 🐛 x' 'feat: ✨ y' | bump_type_for_commits)"
+check "real git-log separator: feat as 3rd record -> minor" "minor" "$(git_log_commits 'chore: 🔧 a' 'docs: 📝 b' 'feat: ✨ c' | bump_type_for_commits)"
 
 check "no current version -> 1.0.0 (patch)" "1.0.0" "$(next_version "" "patch")"
 check "no current version -> 1.0.0 (major)" "1.0.0" "$(next_version "" "major")"
@@ -63,6 +85,9 @@ check "docs-only: has Docs" "true" "$([[ "$docs_only" == *"### Docs"* ]] && echo
 
 chore_excluded="$(commits 'fix: 🐛 x' 'chore: 🔧 internal cleanup' | format_changelog_section "1.4.2" "2026-07-07")"
 check "chore excluded from output" "false" "$([[ "$chore_excluded" == *"internal cleanup"* ]] && echo true || echo false)"
+
+real_git_log_section="$(git_log_commits 'chore: 🔧 a' 'feat: ✨ add blur toggle' | format_changelog_section "1.4.3" "2026-07-08")"
+check "real git-log separator: 2nd-record feat reaches changelog" "true" "$([[ "$real_git_log_section" == *"- ✨ add blur toggle"* ]] && echo true || echo false)"
 
 echo
 if [[ $fails -eq 0 ]]; then

@@ -11,6 +11,7 @@ bump_type_for_commits() {
   local record subject type bang is_major=false has_feat=false has_relevant=false
   while IFS= read -r -d '' record; do
     [[ -z "$record" ]] && continue
+    record="${record#$'\n'}"
     subject="${record%%$'\n'*}"
     if [[ "$subject" =~ ^([a-z]+)(\([^\)]*\))?(\!)?:[[:space:]] ]]; then
       type="${BASH_REMATCH[1]}"
@@ -72,6 +73,7 @@ format_changelog_section() {
 
   while IFS= read -r -d '' record; do
     [[ -z "$record" ]] && continue
+    record="${record#$'\n'}"
     subject="${record%%$'\n'*}"
     if [[ "$subject" =~ ^([a-z]+)(\([^\)]*\))?\!?:[[:space:]](.*)$ ]]; then
       type="${BASH_REMATCH[1]}"
