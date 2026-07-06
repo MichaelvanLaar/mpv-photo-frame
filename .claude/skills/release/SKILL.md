@@ -1,6 +1,7 @@
 ---
 name: release
 description: Cut a new mpv-photo-frame release — bumps VERSION, updates CHANGELOG.md, tags, and (after confirmation) pushes. Use when the user asks to cut/create/publish a release or new version, or runs /release.
+disable-model-invocation: true
 ---
 
 # Cutting a release
