@@ -13,3 +13,4 @@ slideshows/*.conf
 .headroom/
 .serena/
 .codegraph/
+.tokensave/
