@@ -17,7 +17,7 @@ A Linux digital picture frame that plays your photo and video library as a fulls
 - mpv
 - ffmpeg (provides `ffprobe`)
 - ImageMagick (provides `convert`)
-- exiftool (only needed for `SLIDESHOW_BLURRED_BACKGROUND=yes` or `photos-only`, to detect photo/video rotation)
+- exiftool (only needed for `SLIDESHOW_BLURRED_BACKGROUND=yes`/`photos-only` rotation detection, and as a fallback in photo-info.lua for date-only metadata — see below)
 
 ```bash
 sudo apt install mpv ffmpeg imagemagick libimage-exiftool-perl
@@ -139,6 +139,14 @@ the overlay uses your system language, falling back to English.
 | `xlarge` | 1.8×  |                                |
 
 The date and time lines scale together, keeping their relative proportions. An unknown value falls back to `medium`.
+
+The overlay date comes from the first source that has one:
+
+1. An EXIF/stream date+time tag (`DateTimeOriginal`, `DateTime`, `creation_time`, `date`), read via `ffprobe`.
+2. `DateCreated` (IPTC/XMP), read via `exiftool` — for files where only a date, not a time, was ever recorded (e.g. scans, or images that only have a capture date attached to them after the fact). Shown as date only, with no time line.
+3. The TIFF cache's sidecar `.name` file, or the filename itself.
+
+Step 2 requires `exiftool` (see [Requirements](#requirements)); if it's missing, the overlay just falls through to the filename.
 
 ### Customising the blurred background (blurred-background.lua)
 

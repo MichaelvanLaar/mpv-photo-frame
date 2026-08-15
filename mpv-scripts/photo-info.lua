@@ -177,6 +177,30 @@ local function parse_date(s)
     return { day = tonumber(d), month = m, year = y, hour = h, min = mi }
 end
 
+-- Date with no time component, e.g. IPTC/XMP DateCreated on scans that never
+-- recorded a capture time. Returns { day=<number>, month=<1..12>, year=<string> } or nil.
+local function parse_date_only(s)
+    local y, mo, d = s:match("^(%d%d%d%d)[:%-%/](%d%d)[:%-%/](%d%d)$")
+    if not y or y == "0000" then return nil end
+    local m = tonumber(mo)
+    if not m or m < 1 or m > 12 then return nil end
+    return { day = tonumber(d), month = m, year = y }
+end
+
+-- IPTC/XMP DateCreated via exiftool: the one metadata field that can carry a
+-- date with no attached time (unlike every ffprobe/EXIF tag in DATE_TAGS).
+local function get_exiftool_date_created(path)
+    local r = utils.subprocess({
+        args = { "exiftool", "-j", "-DateCreated", path },
+        capture_stdout = true,
+        capture_stderr = false,
+    })
+    if not r or r.status ~= 0 or not r.stdout then return nil end
+    local data = utils.parse_json(r.stdout)
+    if not data or not data[1] then return nil end
+    return data[1].DateCreated
+end
+
 local function get_label(path, tags)
     -- 1. Date from EXIF/stream tags
     for _, key in ipairs(DATE_TAGS) do
@@ -193,7 +217,26 @@ local function get_label(path, tags)
             end
         end
     end
-    -- 2. Sidecar .name file (TIFF cache — ffprobe cannot read JPEG COM segments)
+    -- 2. Date-only fallback: IPTC/XMP DateCreated (via exiftool) when no
+    --    ffprobe/EXIF tag carried a date+time. Shown as date only, no time line.
+    local dc = get_exiftool_date_created(path)
+    if dc then
+        local p = parse_date(dc)
+        if p then
+            local line2 = (clock == "12") and L.time12(p.hour, p.min)
+                                           or  L.time24(p.hour, p.min)
+            return {
+                line1 = L.date(p.day, L.months[p.month], p.year),
+                line2 = line2,
+            }
+        end
+        local pd = parse_date_only(dc)
+        if pd then
+            return { line1 = L.date(pd.day, L.months[pd.month], pd.year), line2 = nil }
+        end
+    end
+
+    -- 3. Sidecar .name file (TIFF cache — ffprobe cannot read JPEG COM segments)
     local fh = io.open(path .. ".name", "r")
     if fh then
         local name = fh:read("*l")
@@ -202,7 +245,7 @@ local function get_label(path, tags)
             return { line1 = name, line2 = nil }
         end
     end
-    -- 3. Filename — skip 32-char hex hashes (TIFF cache artefacts)
+    -- 4. Filename — skip 32-char hex hashes (TIFF cache artefacts)
     local fname = mp.get_property("filename/no-ext") or ""
     if fname ~= ""
         and not fname:match(
