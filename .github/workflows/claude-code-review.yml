@@ -36,4 +36,4 @@ jobs:
             - Test coverage
 
             Use the repository's CLAUDE.md for guidance. Be constructive.
-          claude_args: '--allowed-tools "Bash(gh pr comment:\*),Bash(gh pr diff:\*),Bash(gh pr view:\*)"'
+          claude_args: '--allowed-tools "Read,Grep,Glob,Bash(gh pr comment:\*),Bash(gh pr diff:\*),Bash(gh pr view:\*)"'
