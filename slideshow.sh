@@ -53,11 +53,21 @@ script_opts=()
 [[ -n "${SLIDESHOW_OVERLAY_CLOCK:-}" ]] && script_opts+=(--script-opts-append="photo-info-clock=$SLIDESHOW_OVERLAY_CLOCK")
 [[ -n "${SLIDESHOW_BLURRED_BACKGROUND:-}" ]] && script_opts+=(--script-opts-append="blurred-background-mode=$SLIDESHOW_BLURRED_BACKGROUND")
 
+# The playlist file is already in random order (shuf'd at generation time), so
+# mpv doesn't need --shuffle on top — that reshuffles on every loop-around,
+# which just churns the order without adding coverage. What actually matters
+# for coverage is where playback starts: sessions here are short relative to
+# how long a full pass takes, so always starting at entry 1 would replay the
+# same head of the list every session and let the tail go unseen. Start at a
+# random offset instead so different sessions cover different parts.
+PLAYLIST_LINES=$(grep -c '[^[:space:]]' "$SLIDESHOW_PLAYLIST")
+PLAYLIST_START=$((RANDOM % PLAYLIST_LINES))
+
 mpv \
   --fullscreen \
   --no-audio \
   --image-display-duration="$DELAY" \
   --loop-playlist=inf \
-  --shuffle \
+  --playlist-start="$PLAYLIST_START" \
   "${script_opts[@]}" \
   --playlist="$SLIDESHOW_PLAYLIST"
