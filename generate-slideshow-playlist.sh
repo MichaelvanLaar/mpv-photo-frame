@@ -39,6 +39,33 @@ generate_one() {
   export TIFF_CACHE
   slideshow_parse_sources
 
+  # Skip the rebuild (which reshuffles the whole playlist) unless the source
+  # file set actually changed — playback relies on a stable shuffled order to
+  # cover the whole library over multiple sessions, so a pointless reshuffle
+  # on every login would keep resetting that progress.
+  local manifest="$PLAYLIST.manifest"
+  local current_manifest
+  current_manifest=$(mktemp) || return 1
+  find "${SLIDESHOW_ROOTS[@]}" \
+    "${SLIDESHOW_PRUNE[@]}" \
+    -type f \( \
+    -iname "*.tiff" -o -iname "*.tif" \
+    -o -iname "*.jpg" -o -iname "*.jpeg" \
+    -o -iname "*.png" -o -iname "*.webp" \
+    -o -iname "*.gif" -o -iname "*.bmp" \
+    -o -iname "*.avif" -o -iname "*.heic" \
+    -o -iname "*.mp4" -o -iname "*.mov" \
+    -o -iname "*.avi" -o -iname "*.mkv" \
+    -o -iname "*.m4v" -o -iname "*.3gp" \
+    \) -print | sort >"$current_manifest"
+
+  if [[ -f "$manifest" ]] && grep -q '[^[:space:]]' "$PLAYLIST" 2>/dev/null &&
+    cmp -s "$current_manifest" "$manifest"; then
+    echo "No new or removed media since last run — keeping existing playlist: $PLAYLIST"
+    rm -f "$current_manifest"
+    return 0
+  fi
+
   echo "Scanning for TIFF files…"
   TIFF_COUNT=$(find "${SLIDESHOW_ROOTS[@]}" \
     "${SLIDESHOW_PRUNE[@]}" \
@@ -71,6 +98,7 @@ generate_one() {
     printf '%s\n' $TIFF_JPGS
   } | shuf >"$PLAYLIST"
   rm -f "$nontiff_list"
+  mv "$current_manifest" "$manifest"
   echo "Playlist written: $(wc -l <"$PLAYLIST") entries → $PLAYLIST"
 }
 
